@@ -5,7 +5,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Space Dodger - Juego</title>
-  <!-- Fuente legible -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -127,7 +126,7 @@
     <canvas id="game" width="600" height="800" aria-label="Lienzo del juego Space Dodger"></canvas>
 
     <div class="ui">
-      <h1>Space Dodger</h1>
+      <h1>Space Dodger 🐶🚀</h1>
       <div class="panel">
         <p><strong>Objetivo:</strong> esquivá los asteroides y sumá puntos por tiempo.</p>
         <p><strong>Controles:</strong> ← → o A/D. En celular, tocá izquierda/derecha.</p>
@@ -139,18 +138,16 @@
           <button id="start" class="btn">Iniciar / Reiniciar</button>
           <button id="pause" class="btn secondary" style="margin-left:8px">Pausar</button>
         </div>
-        <footer>
-          Abrí este archivo en el navegador o con Live Server (VS Code).
-        </footer>
+        <footer>Abrí este archivo en el navegador o con Live Server (VS Code).</footer>
       </div>
     </div>
   </div>
 
   <script>
-    // ====== Setup de canvas con HiDPI (sin romper coordenadas) ======
+    // ===== Canvas HiDPI =====
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const CSS_W = 600, CSS_H = 800; // tamaño lógico en CSS px
+    const CSS_W = 600, CSS_H = 800;
 
     function resizeCanvas() {
       const dpr = window.devicePixelRatio || 1;
@@ -158,49 +155,67 @@
       canvas.style.height = CSS_H + 'px';
       canvas.width = Math.floor(CSS_W * dpr);
       canvas.height = Math.floor(CSS_H * dpr);
-      // Escala para que las coordenadas sigan siendo en CSS px
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // UI
+    // ===== UI =====
     const scoreEl = document.getElementById('score');
     const highEl = document.getElementById('high');
     const startBtn = document.getElementById('start');
     const pauseBtn = document.getElementById('pause');
 
-    // ====== Estado del juego ======
-    let running = false;
-    let paused = false;
+    // ===== Estado =====
+    let running = false, paused = false;
     let score = 0;
     let highscore = Number(localStorage.getItem('sd_high') || 0);
     highEl.textContent = highscore;
 
-    // Jugador (triángulo visible y centrado)
-    const player = { x: CSS_W / 2, y: CSS_H - 140, w: 48, h: 60, speed: 8 };
+    // ===== Perrito astronauta (SVG embebido) =====
+    const dogSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fff7e6"/><stop offset="100%" stop-color="#f2d5b0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="64" cy="64" r="58" fill="#dff7ff" stroke="#7df9ff" stroke-width="6"/>
+  <circle cx="64" cy="64" r="50" fill="white" opacity="0.65"/>
+  <path d="M34 40 L20 16 L40 28 Z" fill="#8b5e3c"/>
+  <path d="M94 40 L108 16 L88 28 Z" fill="#8b5e3c"/>
+  <circle cx="64" cy="70" r="34" fill="url(#g)"/>
+  <ellipse cx="52" cy="66" rx="10" ry="12" fill="#8b5e3c" opacity="0.6"/>
+  <circle cx="54" cy="74" r="4" fill="#1f2937"/>
+  <circle cx="78" cy="74" r="4" fill="#1f2937"/>
+  <ellipse cx="66" cy="84" rx="10" ry="7" fill="#fff"/>
+  <circle cx="66" cy="84" r="2.6" fill="#1f2937"/>
+  <rect x="40" y="98" width="48" height="8" rx="4" fill="#22c55e"/>
+</svg>`;
+    const dogImg = new Image();
+    let dogReady = false;
+    dogImg.onload = () => dogReady = true;
+    dogImg.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(dogSvg);
 
-    // Asteroides y partículas
+    // ===== Player =====
+    const player = { x: CSS_W / 2, y: CSS_H - 140, w: 72, h: 72, speed: 8 };
+
+    // ===== Juego =====
     const asteroids = [];
-    let spawnTimer = 0;
-    let spawnInterval = 60; // frames
     const particles = [];
+    let spawnTimer = 0, spawnInterval = 60;
 
-    // Controles
     const keys = {};
     window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
     window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
-    // Tacto móvil (toque izquierdo/derecho)
     canvas.addEventListener('touchstart', e => {
-      const t = e.touches[0];
-      const r = canvas.getBoundingClientRect();
+      const t = e.touches[0], r = canvas.getBoundingClientRect();
       const x = t.clientX - r.left;
       if (x < r.width / 2) keys['touchleft'] = true; else keys['touchright'] = true;
     });
     canvas.addEventListener('touchend', () => { keys['touchleft'] = keys['touchright'] = false; });
 
-    // Mouse: arrastrar con botón para mover
     canvas.addEventListener('mousemove', e => {
       const r = canvas.getBoundingClientRect();
       const x = e.clientX - r.left;
@@ -233,18 +248,23 @@
     }
 
     function drawPlayer() {
-      ctx.save();
-      ctx.translate(player.x, player.y);
-      ctx.beginPath();
-      ctx.moveTo(0, -player.h / 2);
-      ctx.lineTo(player.w / 2, player.h / 2);
-      ctx.lineTo(-player.w / 2, player.h / 2);
-      ctx.closePath();
-      ctx.fillStyle = '#9be6ff';
-      ctx.shadowColor = 'rgba(125,249,255,.6)';
-      ctx.shadowBlur = 16;
-      ctx.fill();
-      ctx.restore();
+      if (dogReady) {
+        ctx.drawImage(dogImg, player.x - player.w / 2, player.y - player.h / 2, player.w, player.h);
+      } else {
+        // Fallback temporal hasta que cargue el SVG
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.beginPath();
+        ctx.moveTo(0, -player.h / 2);
+        ctx.lineTo(player.w / 2, player.h / 2);
+        ctx.lineTo(-player.w / 2, player.h / 2);
+        ctx.closePath();
+        ctx.fillStyle = '#9be6ff';
+        ctx.shadowColor = 'rgba(125,249,255,.6)';
+        ctx.shadowBlur = 16;
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
     function drawAst(a) {
@@ -255,7 +275,7 @@
       const spikes = 6;
       for (let i = 0; i < spikes; i++) {
         const ang = (i / spikes) * Math.PI * 2;
-        const r = a.w / 2 * (0.8 + (i % 2 ? 0.2 : 0)); // más estable visualmente
+        const r = a.w / 2 * (0.8 + (i % 2 ? 0.2 : 0));
         const x = Math.cos(ang) * r;
         const y = Math.sin(ang) * r;
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
@@ -269,8 +289,23 @@
       ctx.restore();
     }
 
+    function explode(x, y) {
+      for (let i = 0; i < 36; i++) {
+        particles.push({ x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.8) * 6, life: 40 + Math.random() * 30 });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 1;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
     function update() {
       if (!running || paused) return;
+
       let move = 0;
       if (keys['arrowleft'] || keys['a'] || keys['touchleft']) move = -1;
       if (keys['arrowright'] || keys['d'] || keys['touchright']) move = 1;
@@ -279,7 +314,6 @@
       if (player.x < halfW) player.x = halfW;
       if (player.x > CSS_W - halfW) player.x = CSS_W - halfW;
 
-      // Spawn y movimiento de asteroides
       spawnTimer++;
       if (spawnTimer >= spawnInterval) {
         spawnAsteroid();
@@ -304,23 +338,8 @@
         }
       }
 
-      // Score por tiempo
       score += 1;
       scoreEl.textContent = score;
-    }
-
-    function explode(x, y) {
-      for (let i = 0; i < 36; i++) {
-        particles.push({ x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.8) * 6, life: 40 + Math.random() * 30 });
-      }
-    }
-
-    function updateParticles() {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 1;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
     }
 
     function draw() {
@@ -337,12 +356,12 @@
       for (const a of asteroids) drawAst(a);
       drawPlayer();
 
-      // Partículas
       for (const p of particles) {
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,140,80,' + (p.life / 80) + ')'; ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,140,80,' + (p.life / 80) + ')'; ctx.fill();
       }
 
-      // HUD con más contraste y sombra para legibilidad
+      // HUD
       ctx.save();
       ctx.font = '18px Inter, system-ui';
       ctx.shadowColor = 'rgba(0,0,0,0.6)';
@@ -365,19 +384,14 @@
       ctx.restore();
     }
 
-    function loop() {
-      update();
-      updateParticles();
-      draw();
-      requestAnimationFrame(loop);
-    }
+    function loop() { update(); updateParticles(); draw(); requestAnimationFrame(loop); }
     loop();
 
     // Botones
-    document.getElementById('start').addEventListener('click', () => { reset(); });
-    document.getElementById('pause').addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? 'Reanudar' : 'Pausar'; });
+    startBtn.addEventListener('click', reset);
+    pauseBtn.addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? 'Reanudar' : 'Pausar'; });
 
-    // Mostrar highscore guardado
+    // Highscore inicial
     highEl.textContent = highscore;
   </script>
 </body>
