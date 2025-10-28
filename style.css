@@ -304,34 +304,45 @@ body {
 }
 
 /* ==== Mejoras responsive para Mini Juegos (móvil) ==== */
+/* Ajuste grilla Mini Juegos en celular */
+/* ===== Ajuste mínimo para móvil (solo vertical) ===== */
 @media (max-width: 600px) {
 
-  nav {
-    gap: 10px !important;
-    padding: 12px !important;
+  /* Menú de juegos: 1 botón por fila */
+  .menu {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 16px !important;
+    /* un respiro alrededor */
+    justify-items: stretch;
   }
 
+  /* Botones: más grandes y tocables */
+  .menu .btn {
+    display: block;
+    /* ocupa toda la fila */
+    width: 100% !important;
+    text-align: center;
+    font-size: 18px !important;
+    /* sin cambiar la estética */
+    padding: 12px 16px !important;
+    min-height: 48px;
+    /* target cómodo dedo */
+    border-radius: 12px;
+    /* suavito, opcional */
+  }
+
+  /* Barra de navegación un pelín más grande */
   nav a {
-    font-size: 20px !important;
+    font-size: 18px !important;
     padding: 10px 14px !important;
   }
 
-  .toolbar input,
-  .toolbar select,
-  .toolbar button {
-    font-size: 18px !important;
-    padding: 12px !important;
-  }
-
-  .grid {
-    gap: 12px !important;
-    grid-template-columns: 1fr !important;
-  }
-
-  .card .actions button,
-  .card .actions .secondary {
-    font-size: 18px !important;
-    padding: 12px 16px !important;
-    width: 100%;
+  /* Título un poquito más presente en celu */
+  header h1 {
+    font-size: 28px;
+    margin: 14px 0;
+    text-align: center;
   }
 }
