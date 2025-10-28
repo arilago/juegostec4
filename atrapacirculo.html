@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Atrapa el Círculo</title>
+  <style>
+    body {
+      background-color: #222;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 40px;
+      user-select: none;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      background-color: #333;
+      border: 3px solid #0f0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    #circle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #0f0;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    #scoreboard {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    #startBtn {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #0f0;
+      border: none;
+      color: #111;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+
+    #startBtn:hover {
+      background-color: #0c0;
+    }
+
+    #timer {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Atrapa el Círculo 🎯</h1>
+
+  <div id="timer">Tiempo: 30 s</div>
+  <div id="scoreboard">Puntaje: 0 | Mejor puntaje: 0</div>
+  <div id="gameArea">
+    <div id="circle" style="display:none;"></div>
+  </div>
+  <button id="startBtn">Comenzar Juego</button>
+
+  <script>
+    const gameArea = document.getElementById('gameArea');
+    const circle = document.getElementById('circle');
+    const scoreBoard = document.getElementById('scoreboard');
+    const timerEl = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+
+    const gameWidth = gameArea.clientWidth;
+    const gameHeight = gameArea.clientHeight;
+    const circleSize = 50;
+
+    let score = 0;
+    let bestScore = localStorage.getItem('bestCircleScore') || 0;
+    let timeLeft = 30;
+    let gameInterval;
+    let timerInterval;
+    let circleSpeed = 1500; // tiempo inicial en ms para mover el círculo
+
+    scoreBoard.textContent = `Puntaje: ${score} | Mejor puntaje: ${bestScore}`;
+
+    function getRandomPosition() {
+      const x = Math.floor(Math.random() * (gameWidth - circleSize));
+      const y = Math.floor(Math.random() * (gameHeight - circleSize));
+      return { x, y };
+    }
+
+    function moveCircle() {
+      const { x, y } = getRandomPosition();
+      circle.style.left = x + 'px';
+      circle.style.top = y + 'px';
+      // Cambiar color al azar
+      circle.style.backgroundColor = `hsl(${Math.floor(Math.random() * 360)}, 80%, 50%)`;
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      circleSpeed = 1500;
+      scoreBoard.textContent = `Puntaje: ${score} | Mejor puntaje: ${bestScore}`;
+      timerEl.textContent = `Tiempo: ${timeLeft} s`;
+      circle.style.display = 'block';
+      startBtn.disabled = true;
+
+      moveCircle();
+      gameInterval = setInterval(() => {
+        moveCircle();
+        // Aumentar velocidad cada 5 puntos, mínimo 400ms
+        if (score > 0 && score % 5 === 0 && circleSpeed > 400) {
+          circleSpeed -= 100;
+          clearInterval(gameInterval);
+          gameInterval = setInterval(moveCircle, circleSpeed);
+        }
+      }, circleSpeed);
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `Tiempo: ${timeLeft} s`;
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      circle.style.display = 'none';
+      startBtn.disabled = false;
+
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('bestCircleScore', bestScore);
+        alert(`¡Nuevo récord! Puntaje: ${score}`);
+      } else {
+        alert(`Tiempo terminado. Puntaje final: ${score}`);
+      }
+      scoreBoard.textContent = `Puntaje: ${score} | Mejor puntaje: ${bestScore}`;
+    }
+
+    circle.addEventListener('click', () => {
+      score++;
+      scoreBoard.textContent = `Puntaje: ${score} | Mejor puntaje: ${bestScore}`;
+      moveCircle();
+    });
+
+    startBtn.addEventListener('click', startGame);
+  </script>
+
+</body>
+
+</html>

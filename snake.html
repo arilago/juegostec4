@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Mejorado 🐍</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    canvas {
+      background-color: #222;
+      border: 2px solid #0f0;
+    }
+
+    #score,
+    #level,
+    #bestScore {
+      font-size: 20px;
+      margin: 5px;
+    }
+
+    button {
+      margin: 15px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #0f0;
+      border: none;
+      color: #000;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0c0;
+    }
+
+    #message {
+      font-size: 18px;
+      color: #ccc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <a href="index.html" class="btn">⬅ Volver al menú</a>
+  <h1>🐍 Snake</h1>
+  <canvas id="game" width="400" height="400"></canvas>
+  <div>
+    <span id="score">Puntos: 0</span> |
+    <span id="level">Nivel: 1</span> |
+    <span id="bestScore">Mejor Puntaje: 0</span>
+  </div>
+  <button id="restartBtn">Reiniciar Juego</button>
+  <div id="message">Presioná una flecha para empezar...</div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const levelEl = document.getElementById("level");
+    const bestScoreEl = document.getElementById("bestScore");
+    const restartBtn = document.getElementById("restartBtn");
+    const message = document.getElementById("message");
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake;
+    let direction;
+    let food;
+    let score;
+    let level;
+    let speed;
+    let gameInterval;
+    let started = false;
+    let bestScore = localStorage.getItem('bestScore') || 0;
+
+    bestScoreEl.textContent = "Mejor Puntaje: " + bestScore;
+
+    const beep = () => {
+      const ctxAudio = new AudioContext();
+      const oscillator = ctxAudio.createOscillator();
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(600, ctxAudio.currentTime);
+      oscillator.connect(ctxAudio.destination);
+      oscillator.start();
+      oscillator.stop(ctxAudio.currentTime + 0.1);
+    };
+
+    function initGame() {
+      snake = [{ x: 10, y: 10 }];
+      direction = { x: 0, y: 0 }; // sin movimiento inicial
+      placeFood();
+      score = 0;
+      level = 1;
+      speed = 200;
+      started = false;
+      scoreEl.textContent = "Puntos: " + score;
+      levelEl.textContent = "Nivel: " + level;
+      message.textContent = "Presioná una flecha para empezar...";
+      clearInterval(gameInterval);
+      drawGame(); // dibujamos aunque esté quieto
+    }
+
+    function placeFood() {
+      let validPosition = false;
+      while (!validPosition) {
+        food = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+        validPosition = !snake.some(seg => seg.x === food.x && seg.y === food.y);
+      }
+    }
+
+    function startGameLoop() {
+      clearInterval(gameInterval);
+      gameInterval = setInterval(gameLoop, speed);
+    }
+
+    function gameLoop() {
+      const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+      if (
+        head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount ||
+        snake.some(seg => seg.x === head.x && seg.y === head.y)
+      ) {
+        endGame();
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        beep();
+        scoreEl.textContent = "Puntos: " + score;
+
+        if (score % 5 === 0) {
+          level++;
+          levelEl.textContent = "Nivel: " + level;
+          speed = Math.max(50, speed - 20);
+          startGameLoop();
+        }
+        placeFood();
+      } else {
+        snake.pop();
+      }
+
+      drawGame();
+    }
+
+    function drawGame() {
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+
+      ctx.fillStyle = "#0f0";
+      snake.forEach((seg, index) => {
+        ctx.fillStyle = index === 0 ? "#00ff00" : "#0f0";
+        ctx.fillRect(seg.x * gridSize, seg.y * gridSize, gridSize - 1, gridSize - 1);
+      });
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('bestScore', bestScore);
+        bestScoreEl.textContent = "Mejor Puntaje: " + bestScore;
+      }
+      alert("¡Perdiste! Puntaje final: " + score);
+    }
+
+    document.addEventListener("keydown", e => {
+      if (!started) {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+          started = true;
+          message.textContent = "";
+          // Establecer dirección inicial válida
+          switch (e.key) {
+            case "ArrowUp":
+              direction = { x: 0, y: -1 };
+              break;
+            case "ArrowDown":
+              direction = { x: 0, y: 1 };
+              break;
+            case "ArrowLeft":
+              direction = { x: -1, y: 0 };
+              break;
+            case "ArrowRight":
+              direction = { x: 1, y: 0 };
+              break;
+          }
+          startGameLoop();
+        }
+        return;
+      }
+
+      // Cambio de dirección solo si ya empezó
+      switch (e.key) {
+        case "ArrowUp":
+          if (direction.y === 0) direction = { x: 0, y: -1 };
+          break;
+        case "ArrowDown":
+          if (direction.y === 0) direction = { x: 0, y: 1 };
+          break;
+        case "ArrowLeft":
+          if (direction.x === 0) direction = { x: -1, y: 0 };
+          break;
+        case "ArrowRight":
+          if (direction.x === 0) direction = { x: 1, y: 0 };
+          break;
+      }
+    });
+
+    restartBtn.addEventListener("click", () => {
+      initGame();
+    });
+
+    initGame();
+  </script>
+
+</body>
+
+</html>

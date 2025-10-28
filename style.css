@@ -1,0 +1,295 @@
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, #ffb6c1, #87ceeb);
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
+
+header {
+  background-color: linear-gradient(to right, #ffb6c1, #87ceeb);
+  padding: 20px;
+  color: white;
+}
+
+    nav {
+      background-color: #333;
+      padding: 10px;
+      display: flex;          /* activa flexbox */
+      justify-content: center; /* centra los links horizontalmente */
+      gap: 30px;              /* espacio entre INICIO y NOSOTROS */
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+
+
+
+
+header h1 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 15px;
+  margin: 10px;
+  background: #ff80bf;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #80d4ff;
+}
+
+canvas {
+  border: 3px solid #ff80bf;
+  border-radius: 10px;
+  margin-top: 15px;
+  background-color: white;
+}
+
+
+
+
+/* Fondo y texto general */
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, pink, lightblue);
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+header h1 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Botones */
+.btn {
+  display: inline-block;
+  padding: 10px 15px;
+  margin: 10px;
+  background: #ff80bf;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #80d4ff;
+}
+
+/* Tablero de cartas */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+/* Cartas */
+.carta {
+  background: white;
+  border: 2px solid #ff80bf;
+  border-radius: 10px;
+  padding: 20px;
+  font-size: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.carta:hover {
+  transform: scale(1.05);
+  background-color: #ffd1e8;
+}
+
+.carta.acertada {
+  background: #80d4ff;
+  color: white;
+  cursor: default;
+  transform: scale(1.1);
+}
+
+/* Mensajes y niveles */
+p, span {
+  font-size: 18px;
+  color: #333;
+  margin: 5px 0;
+}
+
+#mensaje {
+  font-weight: bold;
+  color: #ff3399;
+  margin-top: 10px;
+}
+
+
+
+
+/* Fondo y texto general */
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, pink, lightblue);
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+header h1 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Botones */
+.btn {
+  display: inline-block;
+  padding: 10px 15px;
+  margin: 10px;
+  background: #ff80bf;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #80d4ff;
+}
+
+/* Contenedor de la sopa */
+#sopa {
+  display: inline-block;
+  margin: 20px auto;
+  user-select: none;
+  line-height: 1.5;
+}
+
+/* Letras individuales */
+#sopa span {
+  font-size: 22px;
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  margin: 2px;
+  padding: 2px;
+  border-radius: 5px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+/* Letras al pasar el mouse o al seleccionarlas */
+#sopa span:hover {
+  background-color: #ffb6c1;
+  color: white;
+}
+
+/* Letras encontradas */
+#sopa span.encontrada {
+  background-color: #80d4ff;
+  color: white;
+}
+
+/* Mensajes y niveles */
+p, span {
+  font-size: 18px;
+  color: #333;
+  margin: 5px 0;
+}
+
+#mensaje {
+  font-weight: bold;
+  color: #ff3399;
+  margin-top: 10px;
+}
+
+
+
+
+.btn {
+    display: inline-block;
+    padding: .5rem 1rem;
+    margin-right: .5rem;
+    border-radius: .5rem;
+    text-decoration: none;
+    border: 1px solid #333;
+  }
+
+
+
+
+  body {
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  background: radial-gradient(circle, #feca57, #ff9ff3);
+  color: #222;
+  overflow-x: hidden;
+}
+
+#board {
+  width: 400px;
+  height: 400px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  background-color: #fff;
+  border: 4px solid #333;
+  border-radius: 12px;
+}
+body {
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  background: radial-gradient(circle, #feca57, #ff9ff3);
+  color: #222;
+  margin-top: 20px;
+}
+
+#board {
+  width: 400px;
+  height: 400px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 2px;
+  background-color: #fff;
+  border: 4px solid #333;
+  border-radius: 10px;
+}
+
+.candy {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.candy:hover {
+  transform: scale(1.1);
+}

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nosotros | Técnica 4 Programación</title>
+    <!-- Tipografía profesional -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --panel: #ffffff;
+            --text: #1f2937;
+            /* slate-800 */
+            --muted: #4b5563;
+            /* gray-600 */
+            --heading: #0f172a;
+            /* slate-900 */
+            --accent: #22c55e;
+            /* green-500 */
+            --accent-ink: #065f46;
+            /* emerald-900 */
+            --border: #e5e7eb;
+            /* gray-200 */
+            --radius: 16px;
+            --shadow: 0 10px 25px rgba(2, 6, 23, .06);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+
+        .container {
+            max-width: 960px;
+            margin: auto;
+            padding: 24px
+        }
+
+
+
+        /* HERO TITLE */
+        .page-title {
+            margin: 26px 0 10px 0;
+            font-size: clamp(24px, 4.2vw, 34px);
+            color: var(--heading);
+            font-weight: 800;
+            letter-spacing: .2px
+        }
+
+        .lead {
+            margin: 0 0 14px 0;
+            color: var(--muted)
+        }
+
+        /* CONTENT TYPOGRAPHY */
+        h2 {
+            font-size: clamp(20px, 3.4vw, 26px);
+            margin: 28px 0 10px 0;
+            color: var(--heading);
+            font-weight: 800;
+            letter-spacing: .2px
+        }
+
+        p {
+            line-height: 1.75;
+            margin: 10px 0;
+            color: var(--text)
+        }
+
+
+
+        /* INFO PANEL */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 22px;
+            margin: 24px 0;
+            /* ← ESTO AGREGA espacio arriba y abajo */
+        }
+
+        /* CALL OUT */
+        .callout {
+            border-left: 4px solid var(--accent);
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-radius: 10px
+        }
+
+        /* FOOT */
+        footer {
+            border-top: 1px solid var(--border);
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 14px 0;
+            text-align: center
+        }
+
+        ul {
+            margin: 8px 0 18px 24px;
+            line-height: 1.75;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            position: relative;
+            margin: 6px 0;
+            padding-left: 28px;
+        }
+
+        li::before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            top: 0.15em;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+
+        <a href="index.html">INICIO</a></li>
+        <a href="nosotros.html">NOSOTROS</a></li>
+        <a href="visitanos.html">VISITANOS</a></li>
+
+    </nav>
+    <main class="container">
+        <h1 class="page-title">Nuestra carrera de Programación</h1>
+        <p class="lead">Formación técnica con salida laboral real, proyectos concretos y una comunidad que crea
+            tecnología.</p>
+
+
+        <section class="panel">
+            <h2>💡 ¿Qué es la carrera de Programación?</h2>
+            <p>La carrera de Programación forma estudiantes capaces de diseñar, desarrollar y mantener programas y
+                aplicaciones informáticas. A lo largo de la cursada, aprendemos a resolver problemas reales utilizando
+                la lógica, la creatividad y diferentes lenguajes de programación.</p>
+            <p>Es una formación técnica moderna y con gran salida laboral, ya que la tecnología está presente en todos
+                los ámbitos.</p>
+        </section>
+
+
+        <section class="panel">
+            <h2>🌍 Orgullo Regional</h2>
+            <p>Nuestra escuela cuenta con la primera modalidad en Programación de toda la región, marcando un antes y un
+                después en la educación técnica local. Esto nos convierte en pioneros en la enseñanza tecnológica,
+                preparando a los futuros programadores que impulsarán la innovación en nuestra zona.</p>
+        </section>
+
+
+        <section class="panel">
+            <h2>💻 ¿Qué aprendemos a hacer?</h2>
+            <p>Durante la carrera desarrollamos proyectos que combinan teoría y práctica. Algunas de las cosas que
+                aprendemos son:</p>
+            <ul>
+                <li>Páginas web con HTML y CSS</li>
+                <li>Juegos y aplicaciones interactivas con Python</li>
+                <li>Programar bases de datos y sistemas de gestión</li>
+                <li>Diseñar interfaces visuales y experiencias de usuario</li>
+                <li>Trabajar en equipo con metodologías ágiles</li>
+            </ul>
+        </section>
+
+
+        <section class="panel">
+            <h2>🕹️ Juegos y proyectos</h2>
+            <p>Una de las partes más divertidas de la carrera es el desarrollo de videojuegos 🎮. Usamos Python para
+                crear juegos simples (como laberintos o juegos de plataformas) y HTML con JavaScript para juegos en el
+                navegador. Cada proyecto nos permite poner en práctica la lógica, el diseño y la programación, de una
+                forma creativa y entretenida.</p>
+        </section>
+
+
+        <section class="panel">
+            <h2>🚀 Nuestro objetivo</h2>
+            <p>Formarnos para ser programadores/as con pensamiento lógico, creatividad y capacidad de trabajo en equipo,
+                preparados para los desafíos del mundo digital actual.</p>
+        </section>
+
+
+        <section class="panel">
+            <h2>🧠 Lenguajes y herramientas que usamos</h2>
+            <ul>
+                <li>🐍 Python</li>
+                <li>🌐 HTML / CSS / JavaScript</li>
+                <li>💾 SQL (Bases de Datos)</li>
+                <li>⚙️ Visual Studio Code</li>
+            </ul>
+            <div class="callout">🤝 <strong>Más que una carrera.</strong> Ser parte de esta modalidad no solo significa
+                aprender a programar, sino también pensar, crear y transformar ideas en realidad. Somos una comunidad
+                que innova, colabora y se proyecta hacia el futuro.</div>
+        </section>
+    </main>
+
+    <footer>
+        © Técnica 4 · Programación — Página “Nosotros”
+    </footer>
+</body>
+
+</html>

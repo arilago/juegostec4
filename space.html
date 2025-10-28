@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Space Dodger - Juego</title>
+  <!-- Fuente legible -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #040414;
+      --fg: #0b1224;
+      --fg-soft: #334155;
+      --accent: #7df9ff;
+      --panel: #ffffff;
+      --border: #e5e7eb
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial
+    }
+
+    body {
+      background: radial-gradient(1200px 800px at 20% -20%, #0a1a3a 0%, #040414 50%, #02010a 100%)
+    }
+
+    .wrap {
+      display: flex;
+      gap: 22px;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto
+    }
+
+    canvas {
+      background: linear-gradient(180deg, #050a20, #08102b);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(2, 6, 23, .55)
+    }
+
+    .ui {
+      color: var(--fg);
+      max-width: 360px
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #0f172a
+    }
+
+    .panel {
+      background: var(--panel);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 20px rgba(2, 6, 23, .06)
+    }
+
+    .panel p {
+      margin: 0 0 8px;
+      line-height: 1.6;
+      color: var(--fg-soft)
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #00111b;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: 700;
+      border: 0
+    }
+
+    .btn.secondary {
+      background: #0b1224;
+      color: #e5f2ff
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px
+    }
+
+    .meta div {
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      color: #0f172a
+    }
+
+    footer {
+      color: #475569;
+      font-size: 12px;
+      margin-top: 12px
+    }
+
+    @media (max-width:900px) {
+      .wrap {
+        flex-direction: column;
+        align-items: center;
+        padding: 12px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <canvas id="game" width="600" height="800" aria-label="Lienzo del juego Space Dodger"></canvas>
+
+    <div class="ui">
+      <h1>Space Dodger</h1>
+      <div class="panel">
+        <p><strong>Objetivo:</strong> esquivá los asteroides y sumá puntos por tiempo.</p>
+        <p><strong>Controles:</strong> ← → o A/D. En celular, tocá izquierda/derecha.</p>
+        <div class="meta">
+          <div>Score: <span id="score">0</span></div>
+          <div>Highscore: <span id="high">0</span></div>
+        </div>
+        <div style="margin-top:10px">
+          <button id="start" class="btn">Iniciar / Reiniciar</button>
+          <button id="pause" class="btn secondary" style="margin-left:8px">Pausar</button>
+        </div>
+        <footer>
+          Abrí este archivo en el navegador o con Live Server (VS Code).
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Setup de canvas con HiDPI (sin romper coordenadas) ======
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const CSS_W = 600, CSS_H = 800; // tamaño lógico en CSS px
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.style.width = CSS_W + 'px';
+      canvas.style.height = CSS_H + 'px';
+      canvas.width = Math.floor(CSS_W * dpr);
+      canvas.height = Math.floor(CSS_H * dpr);
+      // Escala para que las coordenadas sigan siendo en CSS px
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // UI
+    const scoreEl = document.getElementById('score');
+    const highEl = document.getElementById('high');
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pause');
+
+    // ====== Estado del juego ======
+    let running = false;
+    let paused = false;
+    let score = 0;
+    let highscore = Number(localStorage.getItem('sd_high') || 0);
+    highEl.textContent = highscore;
+
+    // Jugador (triángulo visible y centrado)
+    const player = { x: CSS_W / 2, y: CSS_H - 140, w: 48, h: 60, speed: 8 };
+
+    // Asteroides y partículas
+    const asteroids = [];
+    let spawnTimer = 0;
+    let spawnInterval = 60; // frames
+    const particles = [];
+
+    // Controles
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+    window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+    // Tacto móvil (toque izquierdo/derecho)
+    canvas.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      const r = canvas.getBoundingClientRect();
+      const x = t.clientX - r.left;
+      if (x < r.width / 2) keys['touchleft'] = true; else keys['touchright'] = true;
+    });
+    canvas.addEventListener('touchend', () => { keys['touchleft'] = keys['touchright'] = false; });
+
+    // Mouse: arrastrar con botón para mover
+    canvas.addEventListener('mousemove', e => {
+      const r = canvas.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      if (e.buttons === 1) player.x = x;
+    });
+    canvas.addEventListener('click', () => { if (!running) reset(); });
+
+    function reset() {
+      score = 0;
+      asteroids.length = 0;
+      particles.length = 0;
+      spawnTimer = 0;
+      spawnInterval = 60;
+      player.x = CSS_W / 2;
+      running = true;
+      paused = false;
+      scoreEl.textContent = score;
+      pauseBtn.textContent = 'Pausar';
+    }
+
+    function spawnAsteroid() {
+      const w = 24 + Math.random() * 56;
+      const x = Math.random() * (CSS_W - w);
+      const speed = 2 + Math.random() * 4 + score * 0.002;
+      asteroids.push({ x, y: -w, w, h: w, speed, angle: Math.random() * Math.PI * 2 });
+    }
+
+    function collide(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.beginPath();
+      ctx.moveTo(0, -player.h / 2);
+      ctx.lineTo(player.w / 2, player.h / 2);
+      ctx.lineTo(-player.w / 2, player.h / 2);
+      ctx.closePath();
+      ctx.fillStyle = '#9be6ff';
+      ctx.shadowColor = 'rgba(125,249,255,.6)';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawAst(a) {
+      ctx.save();
+      ctx.translate(a.x + a.w / 2, a.y + a.h / 2);
+      ctx.rotate(a.angle);
+      ctx.beginPath();
+      const spikes = 6;
+      for (let i = 0; i < spikes; i++) {
+        const ang = (i / spikes) * Math.PI * 2;
+        const r = a.w / 2 * (0.8 + (i % 2 ? 0.2 : 0)); // más estable visualmente
+        const x = Math.cos(ang) * r;
+        const y = Math.sin(ang) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      const g = ctx.createLinearGradient(-a.w / 2, -a.h / 2, a.w / 2, a.h / 2);
+      g.addColorStop(0, '#cfb9a5');
+      g.addColorStop(1, '#8a5d43');
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function update() {
+      if (!running || paused) return;
+      let move = 0;
+      if (keys['arrowleft'] || keys['a'] || keys['touchleft']) move = -1;
+      if (keys['arrowright'] || keys['d'] || keys['touchright']) move = 1;
+      player.x += move * player.speed;
+      const halfW = player.w / 2;
+      if (player.x < halfW) player.x = halfW;
+      if (player.x > CSS_W - halfW) player.x = CSS_W - halfW;
+
+      // Spawn y movimiento de asteroides
+      spawnTimer++;
+      if (spawnTimer >= spawnInterval) {
+        spawnAsteroid();
+        spawnTimer = 0;
+        if (spawnInterval > 18 && score > 200) spawnInterval -= 1;
+      }
+
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const a = asteroids[i];
+        a.y += a.speed; a.angle += 0.02;
+        if (a.y > CSS_H + 100) asteroids.splice(i, 1);
+        const playerBox = { x: player.x - player.w / 2, y: player.y - player.h / 2, w: player.w, h: player.h };
+        const astBox = { x: a.x, y: a.y, w: a.w, h: a.h };
+        if (collide(playerBox, astBox)) {
+          running = false;
+          if (score > highscore) {
+            highscore = score;
+            localStorage.setItem('sd_high', String(highscore));
+            highEl.textContent = highscore;
+          }
+          explode(player.x, player.y);
+        }
+      }
+
+      // Score por tiempo
+      score += 1;
+      scoreEl.textContent = score;
+    }
+
+    function explode(x, y) {
+      for (let i = 0; i < 36; i++) {
+        particles.push({ x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.8) * 6, life: 40 + Math.random() * 30 });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= 1;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, CSS_W, CSS_H);
+
+      // Estrellas sutiles
+      for (let i = 0; i < 60; i++) {
+        const sx = Math.random() * CSS_W;
+        const sy = Math.random() * CSS_H;
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillRect(sx, sy, 1, 1);
+      }
+
+      for (const a of asteroids) drawAst(a);
+      drawPlayer();
+
+      // Partículas
+      for (const p of particles) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,140,80,' + (p.life / 80) + ')'; ctx.fill();
+      }
+
+      // HUD con más contraste y sombra para legibilidad
+      ctx.save();
+      ctx.font = '18px Inter, system-ui';
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Score: ' + score, 14, 28);
+      ctx.fillText('High: ' + highscore, 14, 52);
+
+      if (!running) {
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(CSS_W / 2 - 160, CSS_H / 2 - 72, 320, 144);
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.font = '26px Inter, system-ui';
+        ctx.fillText('¡Game Over!', CSS_W / 2, CSS_H / 2 - 10);
+        ctx.font = '16px Inter, system-ui';
+        ctx.fillText('Presioná Iniciar para jugar otra vez', CSS_W / 2, CSS_H / 2 + 22);
+        ctx.textAlign = 'start';
+      }
+      ctx.restore();
+    }
+
+    function loop() {
+      update();
+      updateParticles();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // Botones
+    document.getElementById('start').addEventListener('click', () => { reset(); });
+    document.getElementById('pause').addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? 'Reanudar' : 'Pausar'; });
+
+    // Mostrar highscore guardado
+    highEl.textContent = highscore;
+  </script>
+</body>
+
+</html>
