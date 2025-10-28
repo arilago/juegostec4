@@ -12,23 +12,26 @@ header {
   color: white;
 }
 
-    nav {
-      background-color: #333;
-      padding: 10px;
-      display: flex;          /* activa flexbox */
-      justify-content: center; /* centra los links horizontalmente */
-      gap: 30px;              /* espacio entre INICIO y NOSOTROS */
-    }
+nav {
+  background-color: #333;
+  padding: 10px;
+  display: flex;
+  /* activa flexbox */
+  justify-content: center;
+  /* centra los links horizontalmente */
+  gap: 30px;
+  /* espacio entre INICIO y NOSOTROS */
+}
 
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-size: 18px;
-    }
+nav a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+}
 
-    nav a:hover {
-      text-decoration: underline;
-    }
+nav a:hover {
+  text-decoration: underline;
+}
 
 
 
@@ -51,6 +54,7 @@ header h1 {
   transition: 0.3s;
   cursor: pointer;
 }
+
 .btn:hover {
   background: #80d4ff;
 }
@@ -92,6 +96,7 @@ header h1 {
   transition: 0.3s;
   cursor: pointer;
 }
+
 .btn:hover {
   background: #80d4ff;
 }
@@ -133,7 +138,8 @@ header h1 {
 }
 
 /* Mensajes y niveles */
-p, span {
+p,
+span {
   font-size: 18px;
   color: #333;
   margin: 5px 0;
@@ -175,6 +181,7 @@ header h1 {
   transition: 0.3s;
   cursor: pointer;
 }
+
 .btn:hover {
   background: #80d4ff;
 }
@@ -214,7 +221,8 @@ header h1 {
 }
 
 /* Mensajes y niveles */
-p, span {
+p,
+span {
   font-size: 18px;
   color: #333;
   margin: 5px 0;
@@ -230,18 +238,18 @@ p, span {
 
 
 .btn {
-    display: inline-block;
-    padding: .5rem 1rem;
-    margin-right: .5rem;
-    border-radius: .5rem;
-    text-decoration: none;
-    border: 1px solid #333;
-  }
+  display: inline-block;
+  padding: .5rem 1rem;
+  margin-right: .5rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  border: 1px solid #333;
+}
 
 
 
 
-  body {
+body {
   font-family: 'Poppins', sans-serif;
   text-align: center;
   background: radial-gradient(circle, #feca57, #ff9ff3);
@@ -261,6 +269,7 @@ p, span {
   border: 4px solid #333;
   border-radius: 12px;
 }
+
 body {
   font-family: 'Poppins', sans-serif;
   text-align: center;
@@ -292,4 +301,45 @@ body {
 
 .candy:hover {
   transform: scale(1.1);
+}
+
+/* ==== Fix responsive mínimo para móvil ==== */
+@media (max-width: 480px) {
+
+  nav {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  nav a {
+    font-size: 18px;
+    padding: 10px 14px;
+  }
+
+  /* Botones generales */
+  button,
+  .btn,
+  input[type="search"],
+  select {
+    font-size: 18px !important;
+    padding: 14px !important;
+    min-height: 48px;
+  }
+
+  /* Botones de tarjetas de juegos */
+  .card .actions button,
+  .card .actions .secondary {
+    font-size: 18px !important;
+    padding: 14px 16px !important;
+    width: 100%;
+  }
+
+  /* Búsqueda y filtros más grandes */
+  .toolbar input,
+  .toolbar select,
+  .toolbar button {
+    font-size: 18px !important;
+    padding: 14px !important;
+    min-width: 100%;
+  }
 }
