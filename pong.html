@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ping Pong 2 Jugadores</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #000;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    background: #111;
+    display: block;
+    margin-top: 20px;
+    border: 3px solid white;
+  }
+  #score {
+    font-size: 24px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏓 Ping Pong 2 Jugadores</h1>
+<div id="score">Jugador 1: 0 | Jugador 2: 0</div>
+<canvas id="pong" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+const scoreDisplay = document.getElementById("score");
+
+const paddleWidth = 10, paddleHeight = 100;
+const player1 = { x: 0, y: canvas.height / 2 - paddleHeight / 2, dy: 0, score: 0 };
+const player2 = { x: canvas.width - paddleWidth, y: canvas.height / 2 - paddleHeight / 2, dy: 0, score: 0 };
+
+const ball = { x: canvas.width / 2, y: canvas.height / 2, size: 10, speed: 5, dx: 5, dy: 5 };
+const WINNING_SCORE = 5;
+
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+
+function drawCircle(x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCenterLine() {
+  ctx.strokeStyle = "#555";
+  ctx.setLineDash([10]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function resetBall() {
+  ball.x = canvas.width / 2;
+  ball.y = canvas.height / 2;
+  ball.dx *= -1;
+  ball.dy = (Math.random() > 0.5 ? 5 : -5);
+}
+
+function updateScore() {
+  scoreDisplay.textContent = `Jugador 1: ${player1.score} | Jugador 2: ${player2.score}`;
+}
+
+function checkWinner() {
+  if (player1.score >= WINNING_SCORE || player2.score >= WINNING_SCORE) {
+    const ganador = player1.score > player2.score ? "Jugador 1" : "Jugador 2";
+    alert(`🎉 ¡${ganador} gana la partida!`);
+    player1.score = 0;
+    player2.score = 0;
+    updateScore();
+  }
+}
+
+function movePaddles() {
+  player1.y += player1.dy;
+  player2.y += player2.dy;
+
+  // limitar movimiento dentro del canvas
+  [player1, player2].forEach(p => {
+    if (p.y < 0) p.y = 0;
+    if (p.y + paddleHeight > canvas.height) p.y = canvas.height - paddleHeight;
+  });
+}
+
+function moveBall() {
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // rebote con el techo y suelo
+  if (ball.y < 0 || ball.y > canvas.height) ball.dy *= -1;
+
+  // colisiones con paletas
+  if (ball.x < player1.x + paddleWidth && ball.y > player1.y && ball.y < player1.y + paddleHeight) {
+    ball.dx *= -1;
+    ball.x = player1.x + paddleWidth; // evitar que se quede pegada
+  }
+  if (ball.x > player2.x - ball.size && ball.y > player2.y && ball.y < player2.y + paddleHeight) {
+    ball.dx *= -1;
+    ball.x = player2.x - ball.size;
+  }
+
+  // punto para jugador 2
+  if (ball.x < 0) {
+    player2.score++;
+    updateScore();
+    checkWinner();
+    resetBall();
+  }
+
+  // punto para jugador 1
+  if (ball.x > canvas.width) {
+    player1.score++;
+    updateScore();
+    checkWinner();
+    resetBall();
+  }
+}
+
+function draw() {
+  drawRect(0, 0, canvas.width, canvas.height, "#111");
+  drawCenterLine();
+  drawRect(player1.x, player1.y, paddleWidth, paddleHeight, "#fff");
+  drawRect(player2.x, player2.y, paddleWidth, paddleHeight, "#fff");
+  drawCircle(ball.x, ball.y, ball.size, "#fff");
+}
+
+function update() {
+  movePaddles();
+  moveBall();
+  draw();
+  requestAnimationFrame(update);
+}
+
+// controles
+document.addEventListener("keydown", e => {
+  if (e.key === "w" || e.key === "W") player1.dy = -8;
+  if (e.key === "s" || e.key === "S") player1.dy = 8;
+  if (e.key === "ArrowUp") player2.dy = -8;
+  if (e.key === "ArrowDown") player2.dy = 8;
+});
+document.addEventListener("keyup", e => {
+  if (["w", "W", "s", "S"].includes(e.key)) player1.dy = 0;
+  if (["ArrowUp", "ArrowDown"].includes(e.key)) player2.dy = 0;
+});
+
+update();
+</script>
+</body>
+</html>
