@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego de Autos</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #333;
+    }
+
+    #gameArea {
+      width: 400px;
+      height: 600px;
+      background: #555;
+      margin: 20px auto;
+      position: relative;
+      overflow: hidden;
+      border: 5px solid #fff;
+    }
+
+    .car {
+      width: 50px;
+      height: 100px;
+      background: red;
+      position: absolute;
+      bottom: 20px;
+      border-radius: 10px;
+    }
+
+    .enemy {
+      width: 50px;
+      height: 100px;
+      background: yellow;
+      position: absolute;
+      top: -100px;
+      border-radius: 10px;
+    }
+
+    #score {
+      text-align: center;
+      color: white;
+      font-size: 24px;
+    }
+
+    .line {
+      width: 10px;
+      height: 80px;
+      background: white;
+      position: absolute;
+      left: 195px;
+    }
+
+    #gameOver {
+      display: none;
+      text-align: center;
+      color: white;
+      font-size: 28px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    #gameOver button {
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Puntaje: 0</div>
+  <div id="gameArea">
+    <div class="car" id="playerCar"></div>
+
+    <!-- Pantalla de Game Over -->
+    <div id="gameOver">
+      <p id="finalScore"></p>
+      <button onclick="restartGame()">Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const playerCar = document.getElementById("playerCar");
+    const scoreDisplay = document.getElementById("score");
+    const gameOverScreen = document.getElementById("gameOver");
+    const finalScore = document.getElementById("finalScore");
+
+    const gameAreaWidth = 400;
+    const carWidth = 50;
+
+    let score = 0;
+    let gameSpeed = 5;
+    let leftArrow = false;
+    let rightArrow = false;
+    let isGameOver = false;
+
+    // Establecer posición inicial desde JS
+    playerCar.style.left = "175px";
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") leftArrow = true;
+      if (e.key === "ArrowRight") rightArrow = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft") leftArrow = false;
+      if (e.key === "ArrowRight") rightArrow = false;
+    });
+
+    // Línea central
+    const lines = [];
+    for (let i = 0; i < 5; i++) {
+      const line = document.createElement("div");
+      line.classList.add("line");
+      line.style.top = `${i * 150}px`;
+      gameArea.appendChild(line);
+      lines.push(line);
+    }
+
+    // Auto enemigo
+    function createEnemyCar() {
+      const enemy = document.createElement("div");
+      enemy.classList.add("enemy");
+      enemy.style.left = `${Math.floor(Math.random() * (gameAreaWidth - carWidth))}px`;
+      enemy.style.top = "-100px";
+      gameArea.appendChild(enemy);
+      return enemy;
+    }
+
+    const enemies = [createEnemyCar()];
+
+    function gameLoop() {
+      if (isGameOver) return;
+
+      // Mover líneas
+      lines.forEach((line) => {
+        let top = parseInt(line.style.top);
+        top += gameSpeed;
+        if (top > 600) top = -80;
+        line.style.top = `${top}px`;
+      });
+
+      // Mover enemigo
+      enemies.forEach((enemy) => {
+        let top = parseInt(enemy.style.top);
+        top += gameSpeed;
+        enemy.style.top = `${top}px`;
+
+        // Colisión
+        if (isColliding(playerCar, enemy)) {
+          endGame();
+          return;
+        }
+
+        // Reiniciar enemigo
+        if (top > 600) {
+          score += 1;
+          scoreDisplay.textContent = `Puntaje: ${score}`;
+          enemy.style.top = "-100px";
+          enemy.style.left = `${Math.floor(Math.random() * (gameAreaWidth - carWidth))}px`;
+
+          // Aumentar dificultad
+          if (score % 5 === 0) {
+            gameSpeed += 1;
+          }
+        }
+      });
+
+      // Mover auto del jugador
+      let left = parseInt(playerCar.style.left);
+      if (leftArrow && left > 0) {
+        playerCar.style.left = `${left - 5}px`;
+      }
+      if (rightArrow && left < gameAreaWidth - carWidth) {
+        playerCar.style.left = `${left + 5}px`;
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function isColliding(a, b) {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+      return !(
+        aRect.bottom < bRect.top ||
+        aRect.top > bRect.bottom ||
+        aRect.right < bRect.left ||
+        aRect.left > bRect.right
+      );
+    }
+
+    function endGame() {
+      isGameOver = true;
+      finalScore.textContent = `💥 ¡Has chocado! Puntaje: ${score}`;
+      gameOverScreen.style.display = "block";
+    }
+
+    function restartGame() {
+      window.location.reload();
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
