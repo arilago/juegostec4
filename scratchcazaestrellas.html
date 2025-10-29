@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Scratch — Proyecto 1235323716</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, Segoe UI, Roboto, Arial;
+        }
+
+        /* Wrapper con proporción 4:3 como Scratch */
+        .frame-wrap {
+            width: min(100vw, 860px);
+            aspect-ratio: 4 / 3;
+            background: #000;
+            border: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+        }
+
+        .frame-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Nota chiquita opcional */
+        .note {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #9aa4b2;
+            font-size: 12px;
+            text-align: center;
+            opacity: .8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="frame-wrap">
+        <iframe src="https://scratch.mit.edu/projects/1235323716/embed" allowtransparency="true" allowfullscreen
+            scrolling="no">
+        </iframe>
+    </div>
+
+    <div class="note">Si no carga, asegurate de que el proyecto esté “Compartido” en Scratch y que el navegador permita
+        cookies/JS.</div>
+</body>
+
+</html>
