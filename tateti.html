@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tateti</title>
+    <style>
+        :root {
+            --bg: #0b1224;
+            --panel: #111827;
+            --muted: #94a3b8;
+            --x: #22c55e;
+            --o: #60a5fa;
+            --win: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100svh;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(1000px 700px at 20% -10%, #0f1a3a 0%, #0b1224 50%, #070b18 100%);
+            color: #e5e7eb;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .wrap {
+            display: flex;
+            gap: 22px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px
+        }
+
+        .panel {
+            background: rgba(17, 24, 39, .8);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            min-width: 260px;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 22px
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 14px
+        }
+
+        /* Tablero */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            gap: 10px;
+            background: transparent;
+            padding: 6px;
+        }
+
+        .cell {
+            width: 110px;
+            height: 110px;
+            display: grid;
+            place-items: center;
+            font-size: 70px;
+            font-weight: 800;
+            cursor: pointer;
+            user-select: none;
+            background: linear-gradient(180deg, #0f1a33, #0b1224);
+            border: 1px solid #1f2937;
+            border-radius: 14px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .02);
+            transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        .cell:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .35)
+        }
+
+        .cell.x {
+            color: var(--x)
+        }
+
+        .cell.o {
+            color: var(--o)
+        }
+
+        .cell.win {
+            color: #fff !important;
+            background: #1d263f;
+            border-color: #334155;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, .35), 0 0 25px rgba(245, 158, 11, .35);
+            animation: glow 1.1s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 0 2px rgba(245, 158, 11, .25), 0 0 18px rgba(245, 158, 11, .25)
+            }
+
+            100% {
+                box-shadow: 0 0 0 2px rgba(245, 158, 11, .45), 0 0 36px rgba(245, 158, 11, .45)
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px
+        }
+
+        button {
+            border: 1px solid #1f2937;
+            background: #111b36;
+            color: #e5e7eb;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, #22c55e, #10b981);
+            border: 0;
+            color: #032219
+        }
+
+        .stat {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px
+        }
+
+        .badge {
+            background: #0f172a;
+            border: 1px solid #1f2937;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 14px
+        }
+
+        /* Modal resultado */
+        dialog {
+            border: 0;
+            border-radius: 16px;
+            padding: 0;
+            background: #0b1224;
+            color: #e5e7eb;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+            max-width: 92vw;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, .55)
+        }
+
+        .modal-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1f2937;
+            font-weight: 800
+        }
+
+        .modal-body {
+            padding: 16px
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-top: 1px solid #1f2937;
+            justify-content: flex-end
+        }
+
+        @media (max-width:600px) {
+            .board {
+                grid-template-columns: repeat(3, 92px);
+                gap: 8px
+            }
+
+            .cell {
+                width: 92px;
+                height: 92px;
+                font-size: 60px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="wrap">
+        <section class="panel">
+            <h1>Tateti</h1>
+            <div class="muted">Ganá haciendo una línea de 3. Toca una celda para jugar.</div>
+
+            <div class="board" id="board" aria-label="Tablero de Tateti">
+                <div class="cell" data-i="0" aria-label="Celda 1"></div>
+                <div class="cell" data-i="1" aria-label="Celda 2"></div>
+                <div class="cell" data-i="2" aria-label="Celda 3"></div>
+                <div class="cell" data-i="3" aria-label="Celda 4"></div>
+                <div class="cell" data-i="4" aria-label="Celda 5"></div>
+                <div class="cell" data-i="5" aria-label="Celda 6"></div>
+                <div class="cell" data-i="6" aria-label="Celda 7"></div>
+                <div class="cell" data-i="7" aria-label="Celda 8"></div>
+                <div class="cell" data-i="8" aria-label="Celda 9"></div>
+            </div>
+
+            <div class="stat">
+                <div class="badge">Turno: <strong id="turn">X</strong></div>
+                <div class="badge">Victorias X: <strong id="sx">0</strong></div>
+                <div class="badge">Victorias O: <strong id="so">0</strong></div>
+                <div class="badge">Empates: <strong id="sd">0</strong></div>
+            </div>
+
+            <div class="controls">
+                <button id="reset" class="primary">Reiniciar</button>
+                <button id="clear">Borrar marcador</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal resultado -->
+    <dialog id="result">
+        <div class="modal-head" id="resultTitle">Resultado</div>
+        <div class="modal-body" id="resultMsg">Ganó X</div>
+        <div class="modal-actions">
+            <button id="playAgain" class="primary">Jugar de nuevo</button>
+            <button id="closeModal">Cerrar</button>
+        </div>
+    </dialog>
+
+    <script src="tateti.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,260 @@
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, pink, lightblue);
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+header h1 {
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 20px;
+  margin: 10px;
+  background: #ff80bf;
+  color: white;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 18px;
+  transition: 0.3s;
+}
+.btn:hover {
+  background: #80d4ff;
+}
+
+/* Cartas del juego de memoria */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  max-width: 500px;
+  margin: 20px auto;
+}
+.carta {
+  background: white;
+  border: 2px solid #ff80bf;
+  border-radius: 10px;
+  padding: 20px;
+  font-size: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.carta.acertada {
+  background: #80d4ff;
+  color: white;
+  cursor: default;
+  transform: scale(1.1);
+}
+
+/* Letras sopa de letras */
+#sopa span {
+  font-size: 22px;
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  margin: 2px;
+  padding: 2px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#sopa span.encontrada {
+  background-color: #80d4ff;
+  color: white;
+}
+
+/*serpiente*/
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background:  linear-gradient(to right, pink, lightblue);
+  text-align: center;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  margin-top: 20px;
+}
+
+#gameCanvas {
+  border: 2px solid #fff;
+  background: #000000;
+  margin: 20px 0;
+}
+
+/*adivinar el numero*/
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background:linear-gradient(to right, pink, lightblue);
+    padding: 50px;
+}
+
+.container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    display: inline-block;
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    width: 150px;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+#feedback {
+    font-weight: bold;
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+#attempts {
+    margin-top: 10px;
+}
+
+/*tateti*/
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: linear-gradient(to right, pink, lightblue);
+    padding: 50px;
+}
+
+.container {
+    display: inline-block;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    margin: 20px auto;
+}
+
+.cell {
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.cell:hover {
+    background: #d0d0d0;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/*pinpom*/
+body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background:linear-gradient(to right, pink, lightblue);
+    color: #fff;
+}
+
+#gameContainer {
+    position: relative;
+    margin: 20px auto;
+    width: 600px;
+    height: 400px;
+    background: #111;
+    border: 2px solid #fff;
+}
+
+.paddle {
+    position: absolute;
+    width: 10px;
+    height: 100px;
+    background: #fff;
+}
+
+#paddleLeft {
+    left: 0;
+    top: 150px;
+}
+
+#paddleRight {
+    right: 0;
+    top: 150px;
+}
+
+#ball {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    border-radius: 50%;
+    top: 192px;
+    left: 292px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+/*trivia*/
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, pink, lightblue);
+    text-align: center;
+    padding: 50px;
+}
+
+.container {
+    background: #000000;
+    display: inline-block;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+button {
+    margin: 10px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #000000;
+}

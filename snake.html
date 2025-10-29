@@ -3,19 +3,50 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Snake Mejorado 🐍</title>
   <style>
+    :root {
+      --bg: #111;
+      --panel: #222;
+      --accent: #0f0;
+      --text: #fff;
+      --muted: #ccc;
+    }
+
+    html,
     body {
-      background-color: #111;
-      color: #fff;
-      font-family: sans-serif;
+      height: 100%;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       text-align: center;
-      margin-top: 30px;
+      margin: 0;
+      padding: 30px 12px 24px;
+      display: grid;
+      place-items: start center;
+      gap: 10px;
+    }
+
+    a.btn-back {
+      color: #9ff;
+      text-decoration: none;
+    }
+
+    h1 {
+      margin: 6px 0 10px;
     }
 
     canvas {
-      background-color: #222;
-      border: 2px solid #0f0;
+      background-color: var(--panel);
+      border: 2px solid var(--accent);
+      touch-action: none;
+      /* clave en móvil: sin scroll al tocar */
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     #score,
@@ -23,45 +54,78 @@
     #bestScore {
       font-size: 20px;
       margin: 5px;
+      display: inline-block;
+    }
+
+    .sep {
+      opacity: .4;
+      margin: 0 6px;
     }
 
     button {
-      margin: 15px;
+      margin: 12px;
       padding: 10px 20px;
       font-size: 18px;
       cursor: pointer;
-      background-color: #0f0;
+      background-color: var(--accent);
       border: none;
       color: #000;
-      border-radius: 5px;
-      transition: background-color 0.3s;
+      border-radius: 8px;
+      transition: transform .05s ease;
     }
 
-    button:hover {
-      background-color: #0c0;
+    button:active {
+      transform: translateY(1px);
     }
 
     #message {
-      font-size: 18px;
-      color: #ccc;
-      margin-top: 10px;
+      font-size: 16px;
+      color: var(--muted);
+      margin-top: 6px;
+      min-height: 22px;
+    }
+
+    /* Mobile: un poco más grande todo */
+    @media (max-width: 480px) {
+      canvas {
+        width: 92vw;
+        height: 92vw;
+        max-width: 420px;
+        max-height: 420px;
+      }
+
+      #score,
+      #level,
+      #bestScore {
+        font-size: 18px;
+      }
+
+      button {
+        font-size: 18px;
+        padding: 12px 18px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <a href="index.html" class="btn">⬅ Volver al menú</a>
+  <a href="index.html" class="btn-back">⬅ Volver al menú</a>
   <h1>🐍 Snake</h1>
-  <canvas id="game" width="400" height="400"></canvas>
+
+  <!-- Canvas cuadrado (400x400 lógicos). En móvil lo escalo vía CSS. -->
+  <canvas id="game" width="400" height="400" aria-label="Juego Snake"></canvas>
+
   <div>
-    <span id="score">Puntos: 0</span> |
-    <span id="level">Nivel: 1</span> |
+    <span id="score">Puntos: 0</span><span class="sep">|</span>
+    <span id="level">Nivel: 1</span><span class="sep">|</span>
     <span id="bestScore">Mejor Puntaje: 0</span>
   </div>
+
   <button id="restartBtn">Reiniciar Juego</button>
-  <div id="message">Presioná una flecha para empezar...</div>
+  <div id="message">Deslizá el dedo o presioná una flecha para empezar…</div>
 
   <script>
+    /* ====== Setup básico ====== */
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
@@ -70,34 +134,41 @@
     const restartBtn = document.getElementById("restartBtn");
     const message = document.getElementById("message");
 
-    const gridSize = 20;
-    const tileCount = canvas.width / gridSize;
+    const gridSize = 20;                       // tamaño de celda (px)
+    const tileCount = canvas.width / gridSize; // 400/20 = 20
 
-    let snake;
-    let direction;
-    let food;
-    let score;
-    let level;
-    let speed;
-    let gameInterval;
-    let started = false;
-    let bestScore = localStorage.getItem('bestScore') || 0;
-
+    let snake, direction, food, score, level, speed, gameInterval, started = false;
+    let bestScore = Number(localStorage.getItem('bestScore') || 0);
     bestScoreEl.textContent = "Mejor Puntaje: " + bestScore;
 
-    const beep = () => {
-      const ctxAudio = new AudioContext();
-      const oscillator = ctxAudio.createOscillator();
-      oscillator.type = 'square';
-      oscillator.frequency.setValueAtTime(600, ctxAudio.currentTime);
-      oscillator.connect(ctxAudio.destination);
-      oscillator.start();
-      oscillator.stop(ctxAudio.currentTime + 0.1);
-    };
+    /* ====== Audio: desbloqueo en primer gesto ====== */
+    let AC = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function unlockAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new AC();
+        const b = audioCtx.createBuffer(1, 1, 22050);
+        const s = audioCtx.createBufferSource();
+        s.buffer = b; s.connect(audioCtx.destination); s.start(0);
+      } catch (e) { /* sin audio, no pasa nada */ }
+    }
+    function beep() {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.value = 600;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); o.disconnect(); g.disconnect(); }, 100);
+    }
 
+    /* ====== Lógica principal ====== */
     function initGame() {
       snake = [{ x: 10, y: 10 }];
-      direction = { x: 0, y: 0 }; // sin movimiento inicial
+      direction = { x: 0, y: 0 }; // sin movimiento hasta que empiece
       placeFood();
       score = 0;
       level = 1;
@@ -105,19 +176,19 @@
       started = false;
       scoreEl.textContent = "Puntos: " + score;
       levelEl.textContent = "Nivel: " + level;
-      message.textContent = "Presioná una flecha para empezar...";
+      message.textContent = "Deslizá el dedo o presioná una flecha para empezar…";
       clearInterval(gameInterval);
-      drawGame(); // dibujamos aunque esté quieto
+      drawGame();
     }
 
     function placeFood() {
-      let validPosition = false;
-      while (!validPosition) {
+      let valid = false;
+      while (!valid) {
         food = {
           x: Math.floor(Math.random() * tileCount),
           y: Math.floor(Math.random() * tileCount)
         };
-        validPosition = !snake.some(seg => seg.x === food.x && seg.y === food.y);
+        valid = !snake.some(seg => seg.x === food.x && seg.y === food.y);
       }
     }
 
@@ -129,6 +200,7 @@
     function gameLoop() {
       const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
 
+      // Choques
       if (
         head.x < 0 || head.x >= tileCount ||
         head.y < 0 || head.y >= tileCount ||
@@ -140,6 +212,7 @@
 
       snake.unshift(head);
 
+      // Comer
       if (head.x === food.x && head.y === food.y) {
         score++;
         beep();
@@ -149,7 +222,7 @@
           level++;
           levelEl.textContent = "Nivel: " + level;
           speed = Math.max(50, speed - 20);
-          startGameLoop();
+          startGameLoop(); // actualiza velocidad
         }
         placeFood();
       } else {
@@ -160,15 +233,17 @@
     }
 
     function drawGame() {
+      // Fondo
       ctx.fillStyle = "#222";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Comida
       ctx.fillStyle = "red";
       ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
 
-      ctx.fillStyle = "#0f0";
-      snake.forEach((seg, index) => {
-        ctx.fillStyle = index === 0 ? "#00ff00" : "#0f0";
+      // Snake
+      snake.forEach((seg, idx) => {
+        ctx.fillStyle = idx === 0 ? "#00ff00" : "#0f0";
         ctx.fillRect(seg.x * gridSize, seg.y * gridSize, gridSize - 1, gridSize - 1);
       });
     }
@@ -177,61 +252,93 @@
       clearInterval(gameInterval);
       if (score > bestScore) {
         bestScore = score;
-        localStorage.setItem('bestScore', bestScore);
+        localStorage.setItem('bestScore', String(bestScore));
         bestScoreEl.textContent = "Mejor Puntaje: " + bestScore;
       }
-      alert("¡Perdiste! Puntaje final: " + score);
+      message.textContent = "¡Perdiste! Puntaje final: " + score + ". Tocá Reiniciar para jugar de nuevo.";
+      started = false;
     }
 
+    /* ====== Teclado (PC) ====== */
     document.addEventListener("keydown", e => {
-      if (!started) {
-        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-          started = true;
-          message.textContent = "";
-          // Establecer dirección inicial válida
-          switch (e.key) {
-            case "ArrowUp":
-              direction = { x: 0, y: -1 };
-              break;
-            case "ArrowDown":
-              direction = { x: 0, y: 1 };
-              break;
-            case "ArrowLeft":
-              direction = { x: -1, y: 0 };
-              break;
-            case "ArrowRight":
-              direction = { x: 1, y: 0 };
-              break;
-          }
-          startGameLoop();
+      // arranque
+      if (!started && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        started = true; message.textContent = ""; unlockAudio();
+        switch (e.key) {
+          case "ArrowUp": direction = { x: 0, y: -1 }; break;
+          case "ArrowDown": direction = { x: 0, y: 1 }; break;
+          case "ArrowLeft": direction = { x: -1, y: 0 }; break;
+          case "ArrowRight": direction = { x: 1, y: 0 }; break;
         }
+        startGameLoop();
         return;
       }
-
-      // Cambio de dirección solo si ya empezó
+      // giros válidos (no permitir reversa)
       switch (e.key) {
-        case "ArrowUp":
-          if (direction.y === 0) direction = { x: 0, y: -1 };
-          break;
-        case "ArrowDown":
-          if (direction.y === 0) direction = { x: 0, y: 1 };
-          break;
-        case "ArrowLeft":
-          if (direction.x === 0) direction = { x: -1, y: 0 };
-          break;
-        case "ArrowRight":
-          if (direction.x === 0) direction = { x: 1, y: 0 };
-          break;
+        case "ArrowUp": if (direction.y === 0) direction = { x: 0, y: -1 }; break;
+        case "ArrowDown": if (direction.y === 0) direction = { x: 0, y: 1 }; break;
+        case "ArrowLeft": if (direction.x === 0) direction = { x: -1, y: 0 }; break;
+        case "ArrowRight": if (direction.x === 0) direction = { x: 1, y: 0 }; break;
       }
     });
 
-    restartBtn.addEventListener("click", () => {
-      initGame();
-    });
+    /* ====== Controles táctiles (swipe) ====== */
+    let touchStart = null;
 
+    function pointerDown(e) {
+      unlockAudio();
+      const r = canvas.getBoundingClientRect();
+      touchStart = { x: e.clientX - r.left, y: e.clientY - r.top, t: Date.now() };
+      // si no empezó, arrancar con un “tap” rápido en dirección al centro
+      if (!started) {
+        started = true;
+        message.textContent = "";
+        // Si tocan mitad superior/inferior/izq/der, asigno dirección inicial
+        const midX = canvas.width / 2;
+        const midY = canvas.height / 2;
+        const dx = (e.clientX - r.left) - midX;
+        const dy = (e.clientY - r.top) - midY;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          direction = { x: dx > 0 ? 1 : -1, y: 0 };
+        } else {
+          direction = { x: 0, y: dy > 0 ? 1 : -1 };
+        }
+        startGameLoop();
+      }
+    }
+
+    function pointerUp(e) {
+      if (!touchStart) return;
+      const r = canvas.getBoundingClientRect();
+      const dx = (e.clientX - r.left) - touchStart.x;
+      const dy = (e.clientY - r.top) - touchStart.y;
+      touchStart = null;
+
+      const absX = Math.abs(dx), absY = Math.abs(dy);
+      if (absX < 12 && absY < 12) return; // toque corto, sin swipe
+
+      if (absX > absY) {
+        // horizontal
+        if (dx > 0 && direction.x === 0) direction = { x: 1, y: 0 };
+        if (dx < 0 && direction.x === 0) direction = { x: -1, y: 0 };
+      } else {
+        // vertical
+        if (dy > 0 && direction.y === 0) direction = { x: 0, y: 1 };
+        if (dy < 0 && direction.y === 0) direction = { x: 0, y: -1 };
+      }
+    }
+
+    // Usar Pointer Events (cubre mouse y touch)
+    canvas.addEventListener('pointerdown', pointerDown, { passive: false });
+    canvas.addEventListener('pointerup', pointerUp, { passive: false });
+    canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+    /* ====== Botón Reiniciar ====== */
+    restartBtn.addEventListener("click", initGame);
+
+    /* ====== Init ====== */
     initGame();
   </script>
-
 </body>
 
 </html>
