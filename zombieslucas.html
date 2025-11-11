@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Apocalipsis: 2 Jugadores Matan Zombies y Escapan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #1a1a1a;
+      --ink: #eee;
+      --muted: #b9b9b9;
+      --accent: #22c55e;
+      --border: #2a2a2a;
+      --radius: 14px;
+      --shadow: 0 10px 28px rgba(0, 0, 0, .35);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    header {
+      padding: 18px 20px 10px;
+      text-align: center
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.6vw, 28px);
+    }
+
+    /* Layout: aside (texto) + juego */
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 16px 28px;
+      display: grid;
+      grid-template-columns: 1fr 1.8fr;
+      /* texto / juego */
+      gap: 18px;
+      align-items: start;
+    }
+
+    /* Panel lateral */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px 0;
+      font-size: 18px
+    }
+
+    .panel p {
+      margin: 8px 0;
+      color: var(--muted);
+      line-height: 1.6
+    }
+
+    .panel ul {
+      margin: 8px 0 0 18px
+    }
+
+    .panel li {
+      margin: 6px 0;
+    }
+
+    /* Botones */
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 0;
+      cursor: pointer;
+      background: var(--accent);
+      color: #00140a;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #2b2b2b;
+      color: #e8e8e8;
+      border: 1px solid #3a3a3a
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #ddd;
+      font-weight: 600
+    }
+
+    /* Contenedor del juego */
+    .game-wrap {
+      background: #141414;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Canvas: mantiene resolución interna 800x600, pero se muestra más chico */
+    #gameCanvas {
+      display: block;
+      background-color: #222;
+      border: 4px solid #555;
+      width: clamp(320px, 58vw, 640px);
+      /* ← tamaño visual reducido */
+      height: auto;
+      /* respeta proporción */
+      margin: 0 auto;
+      border-radius: 10px;
+    }
+
+    /* Responsive: en celular el texto va arriba y el juego debajo */
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      #gameCanvas {
+        width: min(92vw, 640px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Apocalipsis: 2 Jugadores Matan Zombies y Escapan</h1>
+  </header>
+
+  <main class="layout">
+    <!-- LATERAL: consignas / info -->
+    <aside class="panel">
+      <h2>📋 Consignas</h2>
+      <p>Sobreviví a las oleadas de zombies y lleven a ambos jugadores hasta la zona segura para escapar.</p>
+
+      <div id="info">
+        <button onclick="startGame(1)">Iniciar Juego</button>
+        <p id="status">Seleccioná “Iniciar Juego” para empezar</p>
+
+        <h2 style="margin-top:14px">🎮 Controles</h2>
+        <ul>
+          <li><b>Jugador 1:</b> W/A/S/D para mover, Barra Espaciadora para disparar</li>
+          <li><b>Jugador 2:</b> Flechas para mover, Enter para disparar</li>
+        </ul>
+
+        <p style="margin-top:12px">Zona segura: cuadrado cian en la esquina inferior derecha. Cuando estén <b>los
+            dos</b> adentro, ganan.</p>
+      </div>
+    </aside>
+
+    <!-- JUEGO -->
+    <section class="game-wrap">
+      <!-- Mantengo 800x600 interno para no tocar la lógica, solo achico por CSS -->
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const status = document.getElementById("status");
+
+      const WIDTH = canvas.width;
+      const HEIGHT = canvas.height;
+
+      let gameRunning = false;
+      let level = 1;
+
+      const players = [
+        {
+          id: 1,
+          x: WIDTH / 4,
+          y: HEIGHT / 2,
+          width: 30,
+          height: 50,
+          speed: 4,
+          color: "#4CAF50",
+          dx: 0,
+          dy: 0,
+          health: 10,
+          cooldown: 0,
+          controls: { up: "w", down: "s", left: "a", right: "d", shoot: " " }
+        },
+        {
+          id: 2,
+          x: (3 * WIDTH) / 4,
+          y: HEIGHT / 2,
+          width: 30,
+          height: 50,
+          speed: 4,
+          color: "#2196F3",
+          dx: 0,
+          dy: 0,
+          health: 10,
+          cooldown: 0,
+          controls: { up: "arrowup", down: "arrowdown", left: "arrowleft", right: "arrowright", shoot: "enter" }
+        }
+      ];
+
+      const zombies = [];
+      const bullets = [];
+
+      const safeZone = {
+        x: WIDTH - 120,
+        y: HEIGHT - 120,
+        width: 100,
+        height: 100,
+        color: "rgba(0,255,255,0.3)"
+      };
+
+      const keys = {};
+
+      window.addEventListener("keydown", e => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === " ") e.preventDefault();
+        if (e.key === "Enter") e.preventDefault();
+      });
+
+      window.addEventListener("keyup", e => {
+        keys[e.key.toLowerCase()] = false;
+      });
+
+      function startGame(lvl) {
+        level = lvl;
+        resetGame();
+        status.textContent = `¡Oleada ${level} iniciada! Sobreviví y escapá.`;
+        gameRunning = true;
+        spawnZombies(level * 6);
+        loop();
+      }
+
+      function resetGame() {
+        zombies.length = 0;
+        bullets.length = 0;
+        players.forEach(p => {
+          p.health = 10;
+          p.cooldown = 0;
+          p.dx = 0;
+          p.dy = 0;
+          p.x = p.id === 1 ? WIDTH / 4 : (3 * WIDTH) / 4;
+          p.y = HEIGHT / 2;
+        });
+        gameRunning = false;
+      }
+
+      function spawnZombies(count) {
+        for (let i = 0; i < count; i++) {
+          let zx, zy;
+          do {
+            zx = Math.random() * (WIDTH - 40) + 20;
+            zy = Math.random() * (HEIGHT - 40) + 20;
+          } while (
+            distance(zx, zy, players[0].x, players[0].y) < 150 ||
+            distance(zx, zy, players[1].x, players[1].y) < 150 ||
+            (zx > safeZone.x - 50 && zx < safeZone.x + safeZone.width + 50 &&
+              zy > safeZone.y - 50 && zy < safeZone.y + safeZone.height + 50)
+          );
+          zombies.push({
+            x: zx,
+            y: zy,
+            width: 30,
+            height: 50,
+            speed: 0.5 + level * 0.2,
+            color: "#b03030",
+            alive: true,
+            health: 1
+          });
+        }
+      }
+
+      function distance(x1, y1, x2, y2) {
+        return Math.hypot(x2 - x1, y2 - y1);
+      }
+
+      function update() {
+        if (!gameRunning) return;
+
+        players.forEach(p => {
+          p.dx = 0;
+          p.dy = 0;
+          if (keys[p.controls.up]) p.dy = -p.speed;
+          if (keys[p.controls.down]) p.dy = p.speed;
+          if (keys[p.controls.left]) p.dx = -p.speed;
+          if (keys[p.controls.right]) p.dx = p.speed;
+
+          p.x += p.dx;
+          p.y += p.dy;
+
+          p.x = Math.max(0, Math.min(WIDTH - p.width, p.x));
+          p.y = Math.max(0, Math.min(HEIGHT - p.height, p.y));
+
+          if (p.cooldown > 0) p.cooldown--;
+
+          if (keys[p.controls.shoot] && p.cooldown === 0) {
+            shootBullet(p);
+            p.cooldown = 5;
+          }
+        });
+
+        bullets.forEach((b, i) => {
+          b.x += b.vx;
+          b.y += b.vy;
+          if (b.x < 0 || b.x > WIDTH || b.y < 0 || b.y > HEIGHT) {
+            bullets.splice(i, 1);
+          }
+        });
+
+        zombies.forEach(z => {
+          if (!z.alive) return;
+
+          const target = players.reduce((closest, p) =>
+            distance(z.x, z.y, p.x, p.y) < distance(z.x, z.y, closest.x, closest.y) ? p : closest
+          );
+
+          const dx = target.x - z.x;
+          const dy = target.y - z.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist > 0) {
+            z.x += (dx / dist) * z.speed;
+            z.y += (dy / dist) * z.speed;
+          }
+
+          players.forEach(p => {
+            if (rectIntersect(p, z)) {
+              p.health--;
+              status.textContent = `Jugador ${p.id} ha sido mordido. Salud: ${p.health}`;
+              z.x -= (dx / dist) * 20;
+              z.y -= (dy / dist) * 20;
+              if (p.health <= 0) {
+                gameOver(false, p.id);
+              }
+            }
+          });
+
+          bullets.forEach((b, bi) => {
+            if (rectIntersect(b, z) && z.alive) {
+              z.health--;
+              bullets.splice(bi, 1);
+              if (z.health <= 0) z.alive = false;
+            }
+          });
+        });
+
+        for (let i = zombies.length - 1; i >= 0; i--) {
+          if (!zombies[i].alive) zombies.splice(i, 1);
+        }
+
+        if (zombies.length === 0 && gameRunning) {
+          level++;
+          status.textContent = `¡Oleada ${level} iniciada!`;
+          spawnZombies(level * 6);
+        }
+
+        const allSafe = players.every(p =>
+          p.x + p.width > safeZone.x &&
+          p.x < safeZone.x + safeZone.width &&
+          p.y + p.height > safeZone.y &&
+          p.y < safeZone.y + safeZone.height
+        );
+
+        if (allSafe) {
+          gameOver(true);
+        }
+      }
+
+      function shootBullet(player) {
+        let vx = 0, vy = -10;
+        if (player.dx !== 0 || player.dy !== 0) {
+          const len = Math.hypot(player.dx, player.dy);
+          vx = (player.dx / len) * 10;
+          vy = (player.dy / len) * 10;
+        }
+        bullets.push({
+          x: player.x + player.width / 2 - 5,
+          y: player.y + player.height / 2 - 5,
+          width: 10,
+          height: 10,
+          vx,
+          vy,
+          ownerId: player.id
+        });
+      }
+
+      function rectIntersect(a, b) {
+        return (
+          a.x < b.x + b.width &&
+          a.x + a.width > b.x &&
+          a.y < b.y + b.height &&
+          a.y + a.height > b.y
+        );
+      }
+
+      function drawHuman(x, y, width, height, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+        ctx.beginPath();
+        ctx.arc(x + width / 2, y - width / 2, width / 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = "#222";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        ctx.fillStyle = safeZone.color;
+        ctx.fillRect(safeZone.x, safeZone.y, safeZone.width, safeZone.height);
+
+        players.forEach(p => {
+          drawHuman(p.x, p.y, p.width, p.height, p.color);
+          for (let i = 0; i < p.health; i++) {
+            ctx.fillStyle = "red";
+            ctx.fillRect(p.x + i * 8, p.y - 15, 6, 6);
+          }
+        });
+
+        zombies.forEach(z => {
+          if (z.alive) drawHuman(z.x, z.y, z.width, z.height, z.color);
+        });
+
+        bullets.forEach(b => {
+          ctx.fillStyle = "yellow";
+          ctx.fillRect(b.x, b.y, b.width, b.height);
+        });
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px Arial";
+        ctx.fillText(`Oleada: ${level}`, 20, 30);
+      }
+
+      function gameOver(won, loserId) {
+        gameRunning = false;
+        if (won) {
+          status.textContent = "¡Felicidades! Ambos jugadores escaparon con vida.";
+        } else {
+          status.textContent = `Jugador ${loserId} murió. Fin del juego.`;
+        }
+      }
+
+      function loop() {
+        if (!gameRunning) return;
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // Exponer start
+      window.startGame = startGame;
+    })();
+  </script>
+
+</body>
+
+</html>
