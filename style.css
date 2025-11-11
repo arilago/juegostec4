@@ -286,13 +286,6 @@ span {
     /* ancho máx en pantallas grandes */
   }
 
-  @media (max-width: 768px) {
-    #sopa {
-      max-width: 95vw;
-      /* que use casi todo el ancho en celu/tablet */
-    }
-  }
-
   .menu .btn {
     width: 100%;
     font-size: 20px;

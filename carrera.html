@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Juego de Autos</title>
   <style>
     * {
@@ -15,14 +17,26 @@
       background: #333;
     }
 
+    #score {
+      text-align: center;
+      color: white;
+      font-size: 24px;
+      margin-top: 8px;
+    }
+
     #gameArea {
       width: 400px;
       height: 600px;
       background: #555;
-      margin: 20px auto;
+      margin: 12px auto 100px;
+      /* deja lugar a la botonera en móvil */
       position: relative;
       overflow: hidden;
       border: 5px solid #fff;
+      touch-action: none;
+      /* clave en móvil */
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .car {
@@ -41,12 +55,6 @@
       position: absolute;
       top: -100px;
       border-radius: 10px;
-    }
-
-    #score {
-      text-align: center;
-      color: white;
-      font-size: 24px;
     }
 
     .line {
@@ -77,10 +85,58 @@
       cursor: pointer;
       margin-top: 10px;
     }
+
+    /* Botonera móvil */
+    #racer-controls {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      display: grid;
+      gap: 10px;
+      z-index: 9999;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #racer-controls .row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    #racer-controls .btn {
+      width: 110px;
+      height: 70px;
+      font-size: 26px;
+      border: 0;
+      border-radius: 14px;
+      background: #1f2937;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+      cursor: pointer;
+    }
+
+    #racer-controls .btn:active {
+      transform: translateY(1px) scale(.98);
+      filter: brightness(1.08);
+    }
+
+    /* Ocultar botonera en escritorio grande (opcional) */
+    @media (min-width: 900px) {
+      #racer-controls {
+        display: none;
+      }
+    }
   </style>
 </head>
+
 <body>
+  <a href="index.html" class="btn"
+    style="color:#9ff; text-decoration:none; display:block; text-align:center; margin-top:8px;">⬅ Volver al menú</a>
   <div id="score">Puntaje: 0</div>
+
   <div id="gameArea">
     <div class="car" id="playerCar"></div>
 
@@ -91,7 +147,16 @@
     </div>
   </div>
 
+  <!-- Botonera móvil -->
+  <div id="racer-controls" aria-label="Controles">
+    <div class="row">
+      <button class="btn" data-act="left" aria-label="Izquierda">◀ Izq</button>
+      <button class="btn" data-act="right" aria-label="Derecha">Der ▶</button>
+    </div>
+  </div>
+
   <script>
+    // ------- Tu juego original -------
     const gameArea = document.getElementById("gameArea");
     const playerCar = document.getElementById("playerCar");
     const scoreDisplay = document.getElementById("score");
@@ -107,14 +172,14 @@
     let rightArrow = false;
     let isGameOver = false;
 
-    // Establecer posición inicial desde JS
+    // posición inicial
     playerCar.style.left = "175px";
 
+    // Teclado (PC)
     document.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") leftArrow = true;
       if (e.key === "ArrowRight") rightArrow = true;
     });
-
     document.addEventListener("keyup", (e) => {
       if (e.key === "ArrowLeft") leftArrow = false;
       if (e.key === "ArrowRight") rightArrow = false;
@@ -139,7 +204,6 @@
       gameArea.appendChild(enemy);
       return enemy;
     }
-
     const enemies = [createEnemyCar()];
 
     function gameLoop() {
@@ -165,7 +229,7 @@
           return;
         }
 
-        // Reiniciar enemigo
+        // Reiniciar enemigo y sumar puntos
         if (top > 600) {
           score += 1;
           scoreDisplay.textContent = `Puntaje: ${score}`;
@@ -208,11 +272,74 @@
       gameOverScreen.style.display = "block";
     }
 
-    function restartGame() {
-      window.location.reload();
-    }
+    function restartGame() { window.location.reload(); }
 
+    // ------- CONTROLES MÓVIL (Pointer Events) -------
+    // Botonera: mantiene presionado = mantiene la dirección
+    (function setupButtons() {
+      const root = document.getElementById('racer-controls');
+      if (!root) return;
+
+      const setFlag = (act, val) => {
+        if (act === 'left') leftArrow = val;
+        if (act === 'right') rightArrow = val;
+        if (navigator.vibrate && val) navigator.vibrate(8);
+      };
+
+      let activeId = null, activeAct = null;
+
+      root.addEventListener('pointerdown', (e) => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        e.preventDefault();
+        activeId = e.pointerId; activeAct = btn.dataset.act;
+        setFlag(activeAct, true);
+        try { root.setPointerCapture(e.pointerId); } catch { }
+      }, { passive: false });
+
+      function clearPress(e) {
+        if (activeId !== null && e.pointerId !== activeId) return;
+        if (activeAct) setFlag(activeAct, false);
+        activeId = null; activeAct = null;
+      }
+      window.addEventListener('pointerup', clearPress, { passive: false });
+      window.addEventListener('pointercancel', clearPress, { passive: false });
+      window.addEventListener('lostpointercapture', clearPress, { passive: false });
+
+      // Evitar scroll/zoom accidental
+      ['touchstart', 'touchmove', 'touchend'].forEach(t => {
+        root.addEventListener(t, ev => ev.preventDefault(), { passive: false });
+      });
+    })();
+
+    // Swipe suave en la pista para “nudge” (golpecito) izquierda/derecha
+    (function setupSwipe() {
+      let downX = null;
+      gameArea.addEventListener('pointerdown', (e) => {
+        const r = gameArea.getBoundingClientRect();
+        downX = e.clientX - r.left;
+      }, { passive: false });
+      gameArea.addEventListener('pointerup', (e) => {
+        if (downX == null) return;
+        const r = gameArea.getBoundingClientRect();
+        const dx = (e.clientX - r.left) - downX;
+        downX = null;
+        const TH = 12; // umbral
+        if (Math.abs(dx) < TH) return;
+        if (dx < 0) {
+          leftArrow = true; setTimeout(() => leftArrow = false, 120);
+        } else {
+          rightArrow = true; setTimeout(() => rightArrow = false, 120);
+        }
+      }, { passive: false });
+
+      // Evita que el dedo haga scroll
+      gameArea.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    })();
+
+    // ¡A jugar!
     gameLoop();
   </script>
 </body>
+
 </html>
