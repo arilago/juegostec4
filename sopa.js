@@ -1,6 +1,15 @@
 // =========================
-// SOPA DE LETRAS - JS FULL
+// SOPA DE LETRAS - JS (arrastre robusto)
 // =========================
+
+(function ensureViewportMeta() {
+  if (!document.querySelector('meta[name="viewport"]')) {
+    const m = document.createElement('meta');
+    m.name = 'viewport';
+    m.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+    document.head.appendChild(m);
+  }
+})();
 
 let nivel = 1;
 const nivelSpan = document.getElementById("nivel");
@@ -8,14 +17,12 @@ const sopaDiv = document.getElementById("sopa");
 const palabrasSpan = document.getElementById("palabras");
 const mensaje = document.getElementById("mensaje");
 
-// Palabras por nivel
 const listaPalabras = [
   ["SOL", "LUNA"],
   ["GATO", "PERRO", "RATA"],
   ["CASA", "ARBOL", "NUBE", "FLOR"]
 ];
 
-// Estado general
 let palabrasActuales = [];
 let encontradas = [];
 let grid = [];
@@ -23,14 +30,24 @@ let size = 0;
 
 // Estado de selección
 let seleccionActiva = false;
+let activePointerId = null;
 let start = null;            // {fila, col}
 let end = null;              // {fila, col}
 let celdasMarcadas = [];     // spans actualmente resaltados
 
-// Para no duplicar listeners al regenerar
+// Estilos base del tablero (independiente de CSS externo)
+sopaDiv.style.margin = "0 auto";
+sopaDiv.style.touchAction = "none";
+sopaDiv.style.userSelect = "none";
+sopaDiv.style.webkitUserSelect = "none";
+
+const BOARD_MAX_PX = 640;  // ancho máximo visible del tablero
+const MIN_CELL = 28;       // tamaño mínimo de celda
+const MAX_CELL = 46;       // tamaño máximo de celda
+
 let listenersReady = false;
 
-// -------- Helpers de pintado ----------
+// ------- Helpers de pintado -------
 function limpiarMarcado() {
   celdasMarcadas.forEach(s => s.style.backgroundColor = "");
   celdasMarcadas = [];
@@ -55,15 +72,13 @@ function palabraEnFila(fila, c1, c2) {
   return s;
 }
 
-// -------- Selección / Validación ----------
+// ------- Selección / Validación -------
 function finalizarSeleccion() {
   if (!seleccionActiva || !start || !end) {
-    seleccionActiva = false;
-    limpiarMarcado();
+    resetSeleccion();
     return;
   }
 
-  // Solo aceptamos misma fila y al menos 2 celdas
   if (start.fila === end.fila && start.col !== end.col) {
     const palabra = palabraEnFila(start.fila, start.col, end.col);
     const inversa = palabra.split("").reverse().join("");
@@ -79,11 +94,8 @@ function finalizarSeleccion() {
     if (encontrada) {
       encontradas.push(encontrada);
       mensaje.textContent = `✅ Encontraste: ${encontrada}`;
-      // congelamos el color de encontrada
       celdasMarcadas.forEach(s => s.style.backgroundColor = "#80d4ff");
-      celdasMarcadas = []; // ya quedaron pintadas
-      // (Opcional) tachar en la lista:
-      // actualizarListaTachada();
+      celdasMarcadas = [];
     } else {
       limpiarMarcado();
     }
@@ -94,16 +106,21 @@ function finalizarSeleccion() {
       setTimeout(() => generarSopa(nivel), 1200);
     }
   } else {
-    // no válida (otra fila o una sola celda)
     limpiarMarcado();
   }
 
+  resetSeleccion();
+}
+
+function resetSeleccion() {
   seleccionActiva = false;
+  activePointerId = null;
   start = null;
   end = null;
 }
 
 function coordDesdePuntero(clientX, clientY) {
+  // Buscamos la celda bajo el punto actual; si hay huecos, closest sube al span correcto
   const el = document.elementFromPoint(clientX, clientY);
   if (!el) return null;
   const celda = el.closest && el.closest("[data-fila][data-col]");
@@ -115,7 +132,20 @@ function coordDesdePuntero(clientX, clientY) {
   };
 }
 
-// --------- Render / Generación ----------
+// ------- Medición robusta del ancho -------
+function medirAnchoTablero() {
+  let w = sopaDiv.getBoundingClientRect().width;
+  if (!w || w <= 0) {
+    const safe = Math.min(window.innerWidth - 16, BOARD_MAX_PX);
+    sopaDiv.style.maxWidth = BOARD_MAX_PX + "px";
+    sopaDiv.style.width = "100%";
+    w = Math.min(safe, BOARD_MAX_PX);
+  }
+  w = Math.min(w, BOARD_MAX_PX, window.innerWidth - 16);
+  return Math.max(200, w);
+}
+
+// ------- Render / Generación -------
 function generarSopa(n) {
   sopaDiv.innerHTML = "";
   mensaje.textContent = "";
@@ -144,10 +174,8 @@ function generarSopa(n) {
     }
   }
 
-  // Tamaño de celda con límites (para que en PC no quede gigante)
-  const contWidth = (sopaDiv.clientWidth || window.innerWidth) - 16;
-  const MIN_CELL = 28;   // px (cómodo para móvil)
-  const MAX_CELL = 46;   // px (tope en desktop)
+  // Tamaño de celda con límites
+  const contWidth = medirAnchoTablero();
   const raw = Math.floor(contWidth / (size + 1));
   const cellSize = Math.max(MIN_CELL, Math.min(MAX_CELL, raw));
 
@@ -172,7 +200,7 @@ function generarSopa(n) {
       span.style.boxSizing = "border-box";
       span.style.cursor = "pointer";
       span.style.borderRadius = "6px";
-      span.style.margin = "2px";
+      span.style.margin = "1px";          // margen chico para reducir “huecos”
       span.style.userSelect = "none";
 
       row.appendChild(span);
@@ -180,61 +208,54 @@ function generarSopa(n) {
     sopaDiv.appendChild(row);
   }
 
-  // Listeners solo se agregan una vez
   if (!listenersReady) {
-    // Bloquear menú de contexto (long-press)
     sopaDiv.addEventListener("contextmenu", (e) => e.preventDefault());
 
-    // Iniciar selección
+    // Iniciar selección (capturamos en el CONTENEDOR)
     sopaDiv.addEventListener("pointerdown", (e) => {
+      if (seleccionActiva) return; // evita segundas pulsaciones simultáneas
       const pt = coordDesdePuntero(e.clientX, e.clientY);
       if (!pt) return;
       e.preventDefault();
 
-      // Capturar el puntero para no perder eventos aunque el dedo salga del elemento
-      try { e.target.setPointerCapture(e.pointerId); } catch { }
-
+      try { sopaDiv.setPointerCapture(e.pointerId); } catch { }
       seleccionActiva = true;
+      activePointerId = e.pointerId;
+
       start = { fila: pt.fila, col: pt.col };
       end = { fila: pt.fila, col: pt.col };
       marcarRangoFila(start.fila, start.col, end.col, "#ffb6c1");
     });
 
-    // Arrastre
-    sopaDiv.addEventListener("pointermove", (e) => {
-      if (!seleccionActiva) return;
+    // Arrastre global (para no perderlo si salís del tablero)
+    window.addEventListener("pointermove", (e) => {
+      if (!seleccionActiva || e.pointerId !== activePointerId) return;
+      e.preventDefault(); // evita que el táctil “salte” o haga scroll
       const pt = coordDesdePuntero(e.clientX, e.clientY);
       if (!pt) return;
-
-      // Sólo misma fila
       if (pt.fila === start.fila) {
         end = { fila: pt.fila, col: pt.col };
         marcarRangoFila(start.fila, start.col, end.col, "#ffb6c1");
       }
-    });
+    }, { passive: false });
 
-    // Soltar (aunque sea fuera del tablero)
-    window.addEventListener("pointerup", () => finalizarSeleccion());
+    // Finalizar
+    const endAll = (e) => {
+      if (!seleccionActiva || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+      finalizarSeleccion();
+      try { sopaDiv.releasePointerCapture(e.pointerId); } catch { }
+    };
+
+    window.addEventListener("pointerup", endAll);
+    window.addEventListener("pointercancel", endAll);
+    window.addEventListener("lostpointercapture", endAll);
 
     listenersReady = true;
   }
 }
 
-// Recalcular en resize/rotación manteniendo nivel
+// Recalcular en resize/rotación con límites coherentes
 window.addEventListener("resize", () => generarSopa(nivel));
 
-// --------- Inicial ---------
+// Inicial
 generarSopa(nivel);
-
-/* ------------------------------------------
-   (Opcional) Si querés tachar la palabra en
-   la lista cuando se encuentra, creá elementos
-   <li> en #palabras y marcá con class "done".
-   Acá dejamos el hook por si lo sumás:
-function actualizarListaTachada() {
-  // ejemplo de implementación si usás <ul id="palabras"> con <li data-palabra="...">
-  [...document.querySelectorAll('#palabras [data-palabra]')].forEach(li => {
-    li.classList.toggle('done', encontradas.includes(li.dataset.palabra));
-  });
-}
-------------------------------------------- */
