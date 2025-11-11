@@ -1,27 +1,36 @@
+// =========================
+// SOPA DE LETRAS - JS FULL
+// =========================
+
 let nivel = 1;
 const nivelSpan = document.getElementById("nivel");
 const sopaDiv = document.getElementById("sopa");
 const palabrasSpan = document.getElementById("palabras");
 const mensaje = document.getElementById("mensaje");
 
+// Palabras por nivel
 const listaPalabras = [
   ["SOL", "LUNA"],
   ["GATO", "PERRO", "RATA"],
   ["CASA", "ARBOL", "NUBE", "FLOR"]
 ];
 
+// Estado general
 let palabrasActuales = [];
 let encontradas = [];
-
-let grid = [];                // guardamos la grilla de letras
+let grid = [];
 let size = 0;
 
 // Estado de selección
 let seleccionActiva = false;
-let start = null;             // {fila, col}
-let end = null;               // {fila, col}
-let celdasMarcadas = [];      // spans actualmente resaltados
+let start = null;            // {fila, col}
+let end = null;              // {fila, col}
+let celdasMarcadas = [];     // spans actualmente resaltados
 
+// Para no duplicar listeners al regenerar
+let listenersReady = false;
+
+// -------- Helpers de pintado ----------
 function limpiarMarcado() {
   celdasMarcadas.forEach(s => s.style.backgroundColor = "");
   celdasMarcadas = [];
@@ -46,6 +55,7 @@ function palabraEnFila(fila, c1, c2) {
   return s;
 }
 
+// -------- Selección / Validación ----------
 function finalizarSeleccion() {
   if (!seleccionActiva || !start || !end) {
     seleccionActiva = false;
@@ -53,7 +63,7 @@ function finalizarSeleccion() {
     return;
   }
 
-  // Solo aceptamos misma fila
+  // Solo aceptamos misma fila y al menos 2 celdas
   if (start.fila === end.fila && start.col !== end.col) {
     const palabra = palabraEnFila(start.fila, start.col, end.col);
     const inversa = palabra.split("").reverse().join("");
@@ -71,7 +81,9 @@ function finalizarSeleccion() {
       mensaje.textContent = `✅ Encontraste: ${encontrada}`;
       // congelamos el color de encontrada
       celdasMarcadas.forEach(s => s.style.backgroundColor = "#80d4ff");
-      celdasMarcadas = []; // vaciamos porque ya quedaron pintadas
+      celdasMarcadas = []; // ya quedaron pintadas
+      // (Opcional) tachar en la lista:
+      // actualizarListaTachada();
     } else {
       limpiarMarcado();
     }
@@ -103,6 +115,7 @@ function coordDesdePuntero(clientX, clientY) {
   };
 }
 
+// --------- Render / Generación ----------
 function generarSopa(n) {
   sopaDiv.innerHTML = "";
   mensaje.textContent = "";
@@ -115,7 +128,7 @@ function generarSopa(n) {
   size = 6 + n * 2;
   grid = Array.from({ length: size }, () => Array(size).fill("."));
 
-  // colocar palabras horizontalmente
+  // Colocar palabras horizontalmente
   palabrasActuales.forEach((p, idx) => {
     const fila = (idx * 2) % size;
     for (let i = 0; i < p.length && i < size; i++) {
@@ -123,7 +136,7 @@ function generarSopa(n) {
     }
   });
 
-  // llenar vacíos
+  // Llenar vacíos
   const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   for (let f = 0; f < size; f++) {
     for (let c = 0; c < size; c++) {
@@ -131,11 +144,14 @@ function generarSopa(n) {
     }
   }
 
-  // calcular tamaño de celda
-  const anchoDisponible = Math.min(window.innerWidth, sopaDiv.clientWidth || window.innerWidth) - 16;
-  const cellSize = Math.max(32, Math.floor(anchoDisponible / (size + 1)));
+  // Tamaño de celda con límites (para que en PC no quede gigante)
+  const contWidth = (sopaDiv.clientWidth || window.innerWidth) - 16;
+  const MIN_CELL = 28;   // px (cómodo para móvil)
+  const MAX_CELL = 46;   // px (tope en desktop)
+  const raw = Math.floor(contWidth / (size + 1));
+  const cellSize = Math.max(MIN_CELL, Math.min(MAX_CELL, raw));
 
-  // render
+  // Render filas/celdas
   for (let f = 0; f < size; f++) {
     const row = document.createElement("div");
     row.style.whiteSpace = "nowrap";
@@ -144,59 +160,81 @@ function generarSopa(n) {
       span.textContent = grid[f][c];
       span.dataset.fila = f;
       span.dataset.col = c;
+
       span.style.display = "inline-flex";
       span.style.alignItems = "center";
       span.style.justifyContent = "center";
       span.style.width = cellSize + "px";
       span.style.height = cellSize + "px";
-      span.style.fontSize = Math.floor(cellSize * 0.6) + "px";
+      const fontPx = Math.min(24, Math.floor(cellSize * 0.6));
+      span.style.fontSize = fontPx + "px";
       span.style.border = "1px solid #ccc";
       span.style.boxSizing = "border-box";
       span.style.cursor = "pointer";
       span.style.borderRadius = "6px";
       span.style.margin = "2px";
       span.style.userSelect = "none";
+
       row.appendChild(span);
     }
     sopaDiv.appendChild(row);
   }
 
-  // ——— Eventos Pointer con captura ———
-  // Bloqueamos menú de contexto (long-press)
-  sopaDiv.addEventListener("contextmenu", (e) => e.preventDefault());
+  // Listeners solo se agregan una vez
+  if (!listenersReady) {
+    // Bloquear menú de contexto (long-press)
+    sopaDiv.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  sopaDiv.addEventListener("pointerdown", (e) => {
-    const pt = coordDesdePuntero(e.clientX, e.clientY);
-    if (!pt) return;
-    e.preventDefault();
+    // Iniciar selección
+    sopaDiv.addEventListener("pointerdown", (e) => {
+      const pt = coordDesdePuntero(e.clientX, e.clientY);
+      if (!pt) return;
+      e.preventDefault();
 
-    // Capturamos el puntero para no perder eventos aunque salga del elemento
-    try { e.target.setPointerCapture(e.pointerId); } catch { }
+      // Capturar el puntero para no perder eventos aunque el dedo salga del elemento
+      try { e.target.setPointerCapture(e.pointerId); } catch { }
 
-    seleccionActiva = true;
-    start = { fila: pt.fila, col: pt.col };
-    end = { fila: pt.fila, col: pt.col };
-    marcarRangoFila(start.fila, start.col, end.col, "#ffb6c1");
-  });
-
-  sopaDiv.addEventListener("pointermove", (e) => {
-    if (!seleccionActiva) return;
-    const pt = coordDesdePuntero(e.clientX, e.clientY);
-    if (!pt) return;
-
-    // Solo permitimos la misma fila
-    if (pt.fila === start.fila) {
+      seleccionActiva = true;
+      start = { fila: pt.fila, col: pt.col };
       end = { fila: pt.fila, col: pt.col };
       marcarRangoFila(start.fila, start.col, end.col, "#ffb6c1");
-    }
-  });
+    });
 
-  const upHandler = () => finalizarSeleccion();
-  window.addEventListener("pointerup", upHandler, { once: true }); // una vez por ciclo de selección
+    // Arrastre
+    sopaDiv.addEventListener("pointermove", (e) => {
+      if (!seleccionActiva) return;
+      const pt = coordDesdePuntero(e.clientX, e.clientY);
+      if (!pt) return;
+
+      // Sólo misma fila
+      if (pt.fila === start.fila) {
+        end = { fila: pt.fila, col: pt.col };
+        marcarRangoFila(start.fila, start.col, end.col, "#ffb6c1");
+      }
+    });
+
+    // Soltar (aunque sea fuera del tablero)
+    window.addEventListener("pointerup", () => finalizarSeleccion());
+
+    listenersReady = true;
+  }
 }
 
-// iniciar
+// Recalcular en resize/rotación manteniendo nivel
+window.addEventListener("resize", () => generarSopa(nivel));
+
+// --------- Inicial ---------
 generarSopa(nivel);
 
-// Recalcular en resize/rotación
-window.addEventListener("resize", () => generarSopa(nivel));
+/* ------------------------------------------
+   (Opcional) Si querés tachar la palabra en
+   la lista cuando se encuentra, creá elementos
+   <li> en #palabras y marcá con class "done".
+   Acá dejamos el hook por si lo sumás:
+function actualizarListaTachada() {
+  // ejemplo de implementación si usás <ul id="palabras"> con <li data-palabra="...">
+  [...document.querySelectorAll('#palabras [data-palabra]')].forEach(li => {
+    li.classList.toggle('done', encontradas.includes(li.dataset.palabra));
+  });
+}
+------------------------------------------- */
