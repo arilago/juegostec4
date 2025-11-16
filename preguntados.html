@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Trivia de 10 preguntas</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+    #quiz {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .pregunta {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .opcion {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #eee;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .opcion:hover {
+      background-color: #ddd;
+    }
+    #resultado {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #siguiente {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="quiz">
+    <div class="pregunta" id="pregunta"></div>
+    <div id="opciones"></div>
+    <div id="resultado"></div>
+    <button id="siguiente" onclick="siguientePregunta()">Siguiente</button>
+  </div>
+
+  <script>
+    const preguntas = [
+      {
+        pregunta: "¿Cuál es la capital de Argentina?",
+        opciones: ["Córdoba", "Rosario", "Buenos Aires", "Mendoza"],
+        respuesta: 2
+      },
+      {
+        pregunta: "¿Qué planeta es el más cercano al Sol?",
+        opciones: ["Venus", "Mercurio", "Marte", "Júpiter"],
+        respuesta: 1
+      },
+      {
+        pregunta: "¿Quién escribió 'Don Quijote de la Mancha'?",
+        opciones: ["Gabriel García Márquez", "Miguel de Cervantes", "Pablo Neruda", "Jorge Luis Borges"],
+        respuesta: 1
+      },
+      {
+        pregunta: "¿Cuántos continentes hay en el mundo?",
+        opciones: ["5", "6", "7", "8"],
+        respuesta: 2
+      },
+      {
+        pregunta: "¿Cuál es el símbolo químico del oro?",
+        opciones: ["Ag", "Au", "O", "Gd"],
+        respuesta: 1
+      },
+      {
+        pregunta: "¿En qué año llegó el hombre a la Luna?",
+        opciones: ["1965", "1969", "1972", "1959"],
+        respuesta: 1
+      },
+      {
+        pregunta: "¿Qué instrumento tiene teclas, cuerdas y martillos?",
+        opciones: ["Guitarra", "Violín", "Piano", "Arpa"],
+        respuesta: 2
+      },
+      {
+        pregunta: "¿Cuál es el océano más grande del mundo?",
+        opciones: ["Atlántico", "Índico", "Ártico", "Pacífico"],
+        respuesta: 3
+      },
+      {
+        pregunta: "¿Qué país tiene forma de bota?",
+        opciones: ["España", "Italia", "Grecia", "Portugal"],
+        respuesta: 1
+      },
+      {
+        pregunta: "¿Qué gas respiramos para vivir?",
+        opciones: ["Dióxido de carbono", "Oxígeno", "Nitrógeno", "Helio"],
+        respuesta: 1
+      }
+    ];
+
+    let indice = 0;
+
+    function mostrarPregunta() {
+      const actual = preguntas[indice];
+      document.getElementById("pregunta").textContent = actual.pregunta;
+      const opcionesDiv = document.getElementById("opciones");
+      opcionesDiv.innerHTML = "";
+      actual.opciones.forEach((opcion, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = opcion;
+        btn.className = "opcion";
+        btn.onclick = () => verificarRespuesta(i);
+        opcionesDiv.appendChild(btn);
+      });
+      document.getElementById("resultado").textContent = "";
+      document.getElementById("siguiente").style.display = "none";
+    }
+
+    function verificarRespuesta(seleccion) {
+      const correcta = preguntas[indice].respuesta;
+      const resultado = document.getElementById("resultado");
+      if (seleccion === correcta) {
+        resultado.textContent = "¡Correcto!";
+        resultado.style.color = "green";
+      } else {
+        resultado.textContent = "Incorrecto. La respuesta correcta es: " + preguntas[indice].opciones[correcta];
+        resultado.style.color = "red";
+      }
+      document.getElementById("siguiente").style.display = "inline-block";
+    }
+
+    function siguientePregunta() {
+      indice++;
+      if (indice < preguntas.length) {
+        mostrarPregunta();
+      } else {
+        document.getElementById("quiz").innerHTML = "<h2>¡Fin del juego!</h2><p>Gracias por jugar.</p>";
+      }
+    }
+
+    mostrarPregunta();
+  </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ajedrez completo</title>
+  <style>
+    body { display: flex; flex-direction: column; align-items: center; background: #eee; font-family: "Segoe UI Symbol","Arial Unicode MS",sans-serif; }
+    .tablero { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 2px solid #333; margin-top: 20px; }
+    .casilla { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; font-size: 32px; cursor: pointer; user-select: none; }
+    .blanca { background-color: #f0d9b5; }
+    .negra { background-color: #b58863; }
+    .seleccionada { outline: 3px solid red; }
+    .indicacion { box-shadow: inset 0 0 0 4px rgba(0, 255, 0, 0.5); }
+    #mensaje { font-size: 24px; margin-top: 10px; color: green; min-height: 28px; }
+    #turno { font-size: 20px; margin-top: 5px; }
+    #reiniciar { margin-top: 12px; padding: 8px 14px; font-size: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <div id="mensaje"></div>
+  <div id="turno">Turno: Blancas</div>
+  <button id="reiniciar">Reiniciar juego</button>
+  <div class="tablero" id="tablero"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tablero = document.getElementById('tablero');
+      const mensaje = document.getElementById('mensaje');
+      const turnoTexto = document.getElementById('turno');
+      const btnReiniciar = document.getElementById('reiniciar');
+
+      let piezas = [];
+      let seleccionada = null; // HTMLElement de la casilla seleccionada
+      let juegoTerminado = false;
+      let turnoBlancas = true;
+
+      const inicial = () => ([
+        ["♜","♞","♝","♛","♚","♝","♞","♜"],
+        ["♟","♟","♟","♟","♟","♟","♟","♟"],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["","","","","","","",""],
+        ["♙","♙","♙","♙","♙","♙","♙","♙"],
+        ["♖","♘","♗","♕","♔","♗","♘","♖"]
+      ]);
+
+      const esBlanca = p => "♙♖♘♗♕♔".includes(p);
+      const esNegra  = p => "♟♜♞♝♛♚".includes(p);
+
+      function crearCasillas() {
+        tablero.innerHTML = "";
+        for (let f = 0; f < 8; f++) {
+          for (let c = 0; c < 8; c++) {
+            const div = document.createElement('div');
+            div.className = `casilla ${(f + c) % 2 === 0 ? 'blanca' : 'negra'}`;
+            div.dataset.fila = f;
+            div.dataset.col = c;
+            tablero.appendChild(div);
+          }
+        }
+      }
+
+      function actualizarTablero() {
+        const nodos = tablero.querySelectorAll('.casilla');
+        nodos.forEach(c => {
+          const f = parseInt(c.dataset.fila);
+          const col = parseInt(c.dataset.col);
+          c.textContent = piezas[f][col];
+          c.classList.remove('seleccionada', 'indicacion');
+        });
+      }
+
+      function limpiarIndicaciones() {
+        tablero.querySelectorAll('.casilla').forEach(c => c.classList.remove('indicacion'));
+      }
+
+      function caminoLibre(f1, c1, f2, c2) {
+        const df = f2 - f1;
+        const dc = c2 - c1;
+        const pasos = Math.max(Math.abs(df), Math.abs(dc));
+        const dirF = df === 0 ? 0 : df / Math.abs(df);
+        const dirC = dc === 0 ? 0 : dc / Math.abs(dc);
+        for (let i = 1; i < pasos; i++) {
+          const fi = f1 + dirF * i;
+          const ci = c1 + dirC * i;
+          if (piezas[fi][ci] !== "") return false;
+        }
+        return true;
+      }
+
+      function movimientoValido(pieza, f1, c1, f2, c2) {
+        if (f1 === f2 && c1 === c2) return false;
+        const df = Math.abs(f2 - f1);
+        const dc = Math.abs(c2 - c1);
+        const destino = piezas[f2][c2];
+        const mismoColor = destino !== "" && esBlanca(pieza) === esBlanca(destino);
+        if (mismoColor) return false;
+
+        switch (pieza) {
+          case "♙": // Blanco avanza hacia filas menores
+            return (
+              (f2 === f1 - 1 && c1 === c2 && destino === "") ||
+              (f1 === 6 && f2 === 4 && c1 === c2 && destino === "" && piezas[5][c2] === "") ||
+              (f2 === f1 - 1 && Math.abs(c2 - c1) === 1 && destino !== "" && esNegra(destino))
+            );
+          case "♟": // Negro avanza hacia filas mayores
+            return (
+              (f2 === f1 + 1 && c1 === c2 && destino === "") ||
+              (f1 === 1 && f2 === 3 && c1 === c2 && destino === "" && piezas[2][c2] === "") ||
+              (f2 === f1 + 1 && Math.abs(c2 - c1) === 1 && destino !== "" && esBlanca(destino))
+            );
+          case "♖": case "♜":
+            return (f1 === f2 || c1 === c2) && caminoLibre(f1, c1, f2, c2);
+          case "♗": case "♝":
+            return df === dc && caminoLibre(f1, c1, f2, c2);
+          case "♕": case "♛":
+            return (df === dc || f1 === f2 || c1 === c2) && caminoLibre(f1, c1, f2, c2);
+          case "♘": case "♞":
+            return (df === 2 && dc === 1) || (df === 1 && dc === 2);
+          case "♔": case "♚":
+            return df <= 1 && dc <= 1;
+          default: return false;
+        }
+      }
+
+      function mostrarIndicaciones(pieza, f1, c1) {
+        limpiarIndicaciones();
+        const nodos = tablero.querySelectorAll('.casilla');
+        for (let f2 = 0; f2 < 8; f2++) {
+          for (let c2 = 0; c2 < 8; c2++) {
+            if (movimientoValido(pieza, f1, c1, f2, c2)) {
+              const casilla = tablero.querySelector(`.casilla[data-fila="${f2}"][data-col="${c2}"]`);
+              casilla.classList.add('indicacion');
+            }
+          }
+        }
+      }
+
+      // Delegación de eventos: un solo listener para todo el tablero
+      tablero.addEventListener('click', (e) => {
+        const casilla = e.target.closest('.casilla');
+        if (!casilla || juegoTerminado) return;
+
+        const f = parseInt(casilla.dataset.fila);
+        const c = parseInt(casilla.dataset.col);
+        const pieza = piezas[f][c];
+
+        if (seleccionada) {
+          const f1 = parseInt(seleccionada.dataset.fila);
+          const c1 = parseInt(seleccionada.dataset.col);
+          const piezaSel = piezas[f1][c1];
+
+          if (
+            movimientoValido(piezaSel, f1, c1, f, c) &&
+            ((turnoBlancas && esBlanca(piezaSel)) || (!turnoBlancas && esNegra(piezaSel)))
+          ) {
+            if (pieza === "♔" || pieza === "♚") {
+              mensaje.textContent = `¡Victoria! Se capturó al rey ${pieza === "♔" ? "blanco" : "negro"}`;
+              juegoTerminado = true;
+              btnReiniciar.style.display = "inline-block";
+            }
+
+            piezas[f][c] = piezaSel;
+            piezas[f1][c1] = "";
+            turnoBlancas = !turnoBlancas;
+            turnoTexto.textContent = `Turno: ${turnoBlancas ? "Blancas" : "Negras"}`;
+          }
+
+          seleccionada.classList.remove('seleccionada');
+          seleccionada = null;
+          limpiarIndicaciones();
+          actualizarTablero();
+        } else if (pieza !== "") {
+          if ((turnoBlancas && esBlanca(pieza)) || (!turnoBlancas && esNegra(pieza))) {
+            seleccionada = casilla;
+            casilla.classList.add('seleccionada');
+            mostrarIndicaciones(pieza, f, c);
+          }
+        }
+      });
+
+      btnReiniciar.addEventListener('click', () => {
+        piezas = inicial();
+        seleccionada = null;
+        juegoTerminado = false;
+        turnoBlancas = true;
+        mensaje.textContent = "";
+        turnoTexto.textContent = "Turno: Blancas";
+        btnReiniciar.style.display = "none";
+        actualizarTablero();
+      });
+
+      // Inicialización segura del tablero y piezas
+      function iniciar() {
+        piezas = inicial();
+        crearCasillas();
+        actualizarTablero();
+        mensaje.textContent = "";
+        turnoTexto.textContent = "Turno: Blancas";
+        btnReiniciar.style.display = "none";
+        seleccionada = null;
+        juegoTerminado = false;
+        turnoBlancas = true;
+      }
+
+      iniciar();
+    });
+  </script>
+</body>
+</html>
