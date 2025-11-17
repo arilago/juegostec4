@@ -165,11 +165,12 @@
       <button class="btn-key" data-key="ArrowRight">➡</button>
     </div>
     <div class="actions">
-      <!-- Por ahora solo rotar con ⟳ y bajar con ⬇, si querés luego agregamos DROP con Space -->
-      <!-- Dejamos un botón grande para bajar rápido -->
       <button class="btn-key" data-key="ArrowDown">⬇ RÁPIDO</button>
     </div>
   </div>
+
+  <!-- 🎵 Música 8-bit (fuera del script) -->
+  <audio src="musica8bit.mp3" autoplay loop></audio>
 
   <script>
     const juegos = [
@@ -202,7 +203,7 @@
       document.querySelectorAll('.content').forEach((content, i) =>
         content.classList.toggle('active', i === index));
     }
-    <audio src="musica8bit.mp3" autoplay loop></audio>
+
     // Evitar que las flechas hagan scroll en la página
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
@@ -360,6 +361,7 @@
           player.pos.x += offset;
           offset = -(offset + (offset > 0 ? 1 : -1));
           if (offset > player.matrix[0].length) {
+            // revertir rotación
             rotate(player.matrix);
             rotate(player.matrix);
             rotate(player.matrix);
