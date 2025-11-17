@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Trivia de 10 preguntas</title>
@@ -10,18 +11,21 @@
       text-align: center;
       padding: 20px;
     }
+
     #quiz {
       background: white;
       padding: 20px;
       border-radius: 10px;
       max-width: 500px;
       margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
+
     .pregunta {
       font-size: 1.2em;
       margin-bottom: 20px;
     }
+
     .opcion {
       display: block;
       margin: 10px 0;
@@ -32,13 +36,16 @@
       cursor: pointer;
       transition: background 0.3s;
     }
+
     .opcion:hover {
       background-color: #ddd;
     }
+
     #resultado {
       margin-top: 20px;
       font-weight: bold;
     }
+
     #siguiente {
       margin-top: 20px;
       padding: 10px 20px;
@@ -47,7 +54,9 @@
     }
   </style>
 </head>
+
 <body>
+  <audio src="musica8bit.mp3" autoplay loop></audio>
   <div id="quiz">
     <div class="pregunta" id="pregunta"></div>
     <div id="opciones"></div>
@@ -152,4 +161,5 @@
     mostrarPregunta();
   </script>
 </body>
+
 </html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Golpeá el objeto con la cabeza</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #020617;
+            color: #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 12px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin: 4px 0;
+        }
+
+        p {
+            font-size: 0.9rem;
+            margin: 4px 0;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 900px;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        iframe {
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 4 / 3;
+            border: 2px solid #38bdf8;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        .back-link {
+            margin: 10px 0 18px;
+        }
+
+        .back-link a {
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🤪 Golpeá el objeto con la cabeza</h1>
+        <p>Permití la cámara, mové tu cabeza y tocá el objeto con la nariz para llenar la barra y ganar.</p>
+    </header>
+
+    <div class="game-wrapper">
+        <iframe src="https://scratch.mit.edu/projects/1243932292/embed" allowtransparency="true" frameborder="0"
+            scrolling="no" allow="camera; microphone"></iframe>
+    </div>
+
+    <div class="back-link">
+        <a href="index.html">⬅ Volver al menú de juegos</a>
+    </div>
+</body>
+
+</html>
