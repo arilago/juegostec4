@@ -39,11 +39,25 @@ document.addEventListener("keydown", (e) => {
 
   const wrap = document.createElement('div');
   wrap.id = 'touchControls';
+
+  const bottomMobile = "18vh"; // más arriba en celu
+  const bottomDesktop = "10px";
+  const isMobileWidth = window.innerWidth <= 768;
+
   wrap.style.cssText = `
-    position: fixed; inset: auto 0 10px 0; display: grid;
-    grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 12px; z-index: 9999;
-    touch-action: manipulation; pointer-events: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: ${isMobileWidth ? bottomMobile : bottomDesktop};
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 12px;
+    z-index: 9999;
+    touch-action: manipulation;
+    pointer-events: auto;
   `;
+
   const left = document.createElement('div');
   left.style.cssText = `
     display: grid; grid-template-areas:
@@ -130,6 +144,41 @@ function shootBullet() {
   });
 }
 
+// ===== DIBUJO NAVE / JUGADOR
+function drawShip(x, y, size) {
+  const cx = x + size / 2;
+  const cy = y + size / 2;
+  const half = size / 2;
+
+  // Cuerpo nave
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.moveTo(cx + half, cy);        // punta
+  ctx.lineTo(cx - half, cy - half); // atrás arriba
+  ctx.lineTo(cx - half, cy + half); // atrás abajo
+  ctx.closePath();
+  ctx.fill();
+
+  // Cabina
+  ctx.fillStyle = "#00e5ff";
+  ctx.beginPath();
+  ctx.arc(cx + half / 4, cy, size / 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fuego atrás
+  ctx.fillStyle = "orange";
+  ctx.beginPath();
+  ctx.moveTo(cx - half, cy - size / 4);
+  ctx.lineTo(cx - half - size / 3, cy);
+  ctx.lineTo(cx - half, cy + size / 4);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawPlayer() {
+  drawShip(player.x, player.y, player.size);
+}
+
 // ===== Lógica principal
 function update() {
   // mover entidades
@@ -205,7 +254,7 @@ function update() {
 }
 
 function draw() {
-  // limpiar fondo primero (antes dibujabas, luego lo borrabas)
+  // limpiar fondo primero
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // fondo por nivel
@@ -219,9 +268,8 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // jugador
-  ctx.fillStyle = "cyan";
-  ctx.fillRect(player.x, player.y, player.size, player.size);
+  // jugador (nave espacial)
+  drawPlayer();
 
   // zombies
   ctx.fillStyle = "green";
