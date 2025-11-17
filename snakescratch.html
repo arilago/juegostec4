@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake - Juego</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 800px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: #020617;
+            border-radius: 16px;
+            padding: 16px 16px 24px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+            border: 1px solid #1f2937;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+
+        p {
+            margin: 0 0 16px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #9ca3af;
+        }
+
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            /* relación aprox 4:3 de Scratch */
+            padding-top: 75%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #020617;
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .note {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #6b7280;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <h1>🐍 Snake en scratch</h1>
+            <p>Usá las flechas del teclado para mover la serpiente y juntar comida sin chocar.</p>
+
+            <div class="iframe-container">
+                <iframe src="https://scratch.mit.edu/projects/1243450389/embed" allowtransparency="true" scrolling="no"
+                    allowfullscreen>
+                </iframe>
+            </div>
+
+            <div class="note">
+                Si el juego no carga, verificá que el navegador permita contenido de Scratch.
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
